@@ -1,14 +1,37 @@
 @import './global.scss';
 @import './panel.scss';
 @import './account-panel.scss';
+@import './calendar.scss';
+@import './footer.scss';
+@import './logo.scss';
 
+html,
 body {
-	background-color: var(--bg-2);
+	background-color: var(--bg-1);
+	height: 100%;
 }
 
 main-app {
+	position: relative;
+	background-color: var(--bg-2);
+	display: block;
+	max-width: 500px;
+	width: 100%;
+	margin: 0 auto;
+	height: 100%;
+}
+
+.icon {
+	font-size: 2rem;
+
+	&.hidden {
+		opacity: 0;
+	}
+}
+
+header {
+	padding: 0.5rem 1rem;
 	display: flex;
-	flex-direction: column;
-	gap: 1em;
-	padding: 1em;
+	align-items: center;
+	justify-content: space-between;
 }
