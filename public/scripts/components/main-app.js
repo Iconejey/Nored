@@ -53,11 +53,15 @@ class MainApp extends CustomElement {
 			this.$('header .icon').onclick = e => {
 				e.stopPropagation();
 				body_class.add('menu');
+				navigator.vibrate?.(10);
 			};
 
 			// Remove menu on click if authenticated
 			this.onclick = e => {
-				if (localStorage.getItem('token')) body_class.remove('menu');
+				if (localStorage.getItem('token')) {
+					body_class.remove('menu');
+					navigator.vibrate?.(10);
+				}
 			};
 
 			// If not authenticated, show menu
@@ -71,7 +75,8 @@ class MainApp extends CustomElement {
 			}
 
 			// Move the logo on click
-			this.$('.logo').onclick = async () => {
+			this.$('.logo').onclick = async e => {
+				e.stopPropagation();
 				console.log('Logo clicked');
 				navigator.vibrate?.([50, 50, 10]);
 				this.$('.logo').classList.remove('bloom');
