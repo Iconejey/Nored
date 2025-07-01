@@ -21,4 +21,29 @@ footer {
 		background-color: var(--bg-4);
 		border-radius: 3px;
 	}
+
+	.comment {
+		display: flex;
+		gap: 0.5rem;
+
+		.text {
+			align-self: center;
+		}
+	}
+}
+
+body:not(.menu) footer .menu {
+	display: none;
+}
+
+body.menu {
+	header,
+	.calendar {
+		opacity: 0.3;
+		pointer-events: none;
+	}
+
+	footer .comment {
+		display: none;
+	}
 }

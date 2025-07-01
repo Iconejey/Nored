@@ -4,6 +4,7 @@ account-panel {
 	display: flex;
 	align-items: center;
 	width: 300px;
+	background-color: var(--bg-4) !important;
 
 	.account-circle {
 		background-color: var(--txt-3);

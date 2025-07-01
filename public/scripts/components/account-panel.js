@@ -10,7 +10,7 @@ class AccountPanel extends CustomElement {
 				<div class="account-circle"></div>
 				<div class="account-info">
 					<span class="account-name">Nored</span>
-					<span class="account-email">Sign in or up</span>
+					<span class="account-email">Se connecter</span>
 				</div>
 			`;
 

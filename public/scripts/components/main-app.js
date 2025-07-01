@@ -37,13 +37,47 @@ class MainApp extends CustomElement {
 					<calendar-month year="${next_year}" month="${next_month}" />
 				</div>
 
-				<footer>Cliquez sur un jour où vous avez eu vos règles.</footer>
+				<footer>
+					<div class="comment">
+						<span class="icon">magic_button</span>
+						<span class="text">Cliquez sur un jour où vous avez eu vos règles.</span>
+					</div>
+
+					<div class="menu">
+						<account-panel />
+					</div>
+				</footer>
 			`;
 
-			await delay(500);
-			this.$('.logo').classList.remove('hidden');
-			await delay(1200);
-			this.$('.logo').classList.add('bloom');
+			// Open menu on header icon click
+			this.$('header .icon').onclick = e => {
+				e.stopPropagation();
+				body_class.add('menu');
+			};
+
+			// Remove menu on click if authenticated
+			this.onclick = e => {
+				if (localStorage.getItem('token')) body_class.remove('menu');
+			};
+
+			// If not authenticated, show menu
+			if (!localStorage.getItem('token')) body_class.add('menu');
+			// Else bloom
+			else {
+				await delay(500);
+				this.$('.logo').classList.remove('hidden');
+				await delay(1200);
+				this.$('.logo').classList.add('bloom');
+			}
+
+			// Move the logo on click
+			this.$('.logo').onclick = async () => {
+				console.log('Logo clicked');
+				navigator.vibrate?.([50, 50, 10]);
+				this.$('.logo').classList.remove('bloom');
+				await delay(500);
+				this.$('.logo').classList.add('bloom');
+			};
 		});
 	}
 }
