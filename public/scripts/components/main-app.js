@@ -1,4 +1,3 @@
-// This is a period cycle tracker application.
 class MainApp extends CustomElement {
 	constructor() {
 		super();
@@ -40,7 +39,7 @@ class MainApp extends CustomElement {
 				<footer>
 					<div class="comment">
 						<span class="icon">magic_button</span>
-						<span class="text">Cliquez sur un jour où vous avez eu vos règles.</span>
+						<span class="text">Cliquez sur un jour.</span>
 					</div>
 
 					<div class="menu">
