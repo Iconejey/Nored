@@ -1,7 +1,7 @@
 {
-	"name": "Express template",
-	"short_name": "Express template",
-	"description": "An express and scss project template.",
+	"name": "Nored",
+	"short_name": "Nored",
+	"description": "Suivez votre cycle menstruel et estimez votre prochain cycle avec l'IA.",
 	"start_url": "/",
 	"display": "standalone",
 	"background_color": "#131313",
@@ -20,37 +20,37 @@
 
 	"icons": [
 		{
-			"src": "https://icons.ngwy.fr/maskable/resize/f9f9f9/000000/1024/1024",
+			"src": "https://icons.nosuite.fr/maskable/menstrual_health/f9f9f9/000000/1024/1024",
 			"sizes": "1024x1024",
 			"type": "image/png",
 			"purpose": "maskable"
 		},
 		{
-			"src": "https://icons.ngwy.fr/maskable/resize/f9f9f9/000000/512/512",
+			"src": "https://icons.nosuite.fr/maskable/menstrual_health/f9f9f9/000000/512/512",
 			"sizes": "512x512",
 			"type": "image/png",
 			"purpose": "maskable"
 		},
 		{
-			"src": "https://icons.ngwy.fr/maskable/resize/f9f9f9/000000/256/256",
+			"src": "https://icons.nosuite.fr/maskable/menstrual_health/f9f9f9/000000/256/256",
 			"sizes": "256x256",
 			"type": "image/png",
 			"purpose": "maskable"
 		},
 		{
-			"src": "https://icons.ngwy.fr/circle/resize/f9f9f9/000000/1024/1024",
+			"src": "https://icons.nosuite.fr/circle/menstrual_health/f9f9f9/000000/1024/1024",
 			"sizes": "1024x1024",
 			"type": "image/png",
 			"purpose": "any"
 		},
 		{
-			"src": "https://icons.ngwy.fr/circle/resize/f9f9f9/000000/512/512",
+			"src": "https://icons.nosuite.fr/circle/menstrual_health/f9f9f9/000000/512/512",
 			"sizes": "512x512",
 			"type": "image/png",
 			"purpose": "any"
 		},
 		{
-			"src": "https://icons.ngwy.fr/circle/resize/f9f9f9/000000/256/256",
+			"src": "https://icons.nosuite.fr/circle/menstrual_health/f9f9f9/000000/256/256",
 			"sizes": "256x256",
 			"type": "image/png",
 			"purpose": "any"

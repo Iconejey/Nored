@@ -9,7 +9,7 @@ class AccountPanel extends CustomElement {
 			this.innerHTML = html`
 				<div class="account-circle"></div>
 				<div class="account-info">
-					<span class="account-name">Nothing</span>
+					<span class="account-name">Nored</span>
 					<span class="account-email">Sign in or up</span>
 				</div>
 			`;
