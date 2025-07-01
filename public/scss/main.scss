@@ -1,0 +1,14 @@
+@import './global.scss';
+@import './panel.scss';
+@import './account-panel.scss';
+
+body {
+	background-color: var(--bg-2);
+}
+
+main-app {
+	display: flex;
+	flex-direction: column;
+	gap: 1em;
+	padding: 1em;
+}

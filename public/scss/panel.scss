@@ -1,0 +1,48 @@
+body {
+	--radius: 0.5em;
+}
+
+// Default panel styles
+.panel,
+input,
+textarea,
+button {
+	border-radius: var(--radius);
+	background-color: var(--bg-3);
+	overflow: hidden;
+	border: 1px solid var(--bg-1);
+}
+
+// Hover effect
+button:hover,
+.hoverable:hover {
+	background-color: var(--bg-4);
+}
+
+input,
+button {
+	padding: 0.7em 1em;
+	font-size: 1rem;
+	color: var(--txt-2);
+}
+
+// Panel wrapper
+.panel-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	border-radius: var(--radius);
+	overflow: hidden;
+	border: 1px solid var(--bg-1);
+	background-color: var(--bg-1);
+
+	&.sideways {
+		flex-direction: row;
+		min-height: fit-content;
+	}
+
+	& > * {
+		border-radius: 0;
+		border: none;
+	}
+}
