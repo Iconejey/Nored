@@ -2,19 +2,21 @@
 @import './panel.scss';
 @import './account-panel.scss';
 @import './calendar.scss';
-@import './footer.scss';
 @import './logo.scss';
 
 html,
 body {
 	background-color: var(--bg-1);
 	height: 100%;
+	overflow: hidden;
+	overscroll-behavior: none;
 }
 
 main-app {
 	position: relative;
 	background-color: var(--bg-2);
-	display: block;
+	display: flex;
+	flex-direction: column;
 	max-width: 500px;
 	width: 100%;
 	margin: 0 auto;
@@ -23,10 +25,6 @@ main-app {
 
 .icon {
 	font-size: 2rem;
-
-	&.hidden {
-		opacity: 0;
-	}
 }
 
 header {
@@ -35,4 +33,10 @@ header {
 	align-items: center;
 	justify-content: space-between;
 	transition: opacity 0.3s ease;
+	background-color: var(--bg-2);
+	z-index: 1;
+
+	.icon:not(:active, :hover) {
+		opacity: 0.3;
+	}
 }

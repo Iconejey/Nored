@@ -7,7 +7,7 @@ class CalendarMonth extends CustomElement {
 		this.whenReady(() => {
 			// Get the first day of the month
 			const year = parseInt(this.year);
-			const month = parseInt(this.month);
+			const month = parseInt(this.month) || 0;
 			let date = new Date(year, month, 1);
 
 			// Set inner HTML
