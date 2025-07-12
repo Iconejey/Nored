@@ -57,8 +57,6 @@ class CalendarMonth extends CustomElement {
 					elem.classList.add('today');
 				}
 
-				if (month === 6) console.log(elem);
-
 				// On click, dispatch a custom event with the date
 				elem.addEventListener('click', e => {
 					e.stopPropagation();

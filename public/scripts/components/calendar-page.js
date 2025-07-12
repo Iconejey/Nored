@@ -21,20 +21,20 @@ class CalendarPage extends CustomElement {
 			`;
 
 			// Populate the calendar with months
-			this.populate();
+			if (userSignedIn()) this.populate();
 
 			// Authenticate on account click
-			this.$('header .icon#account').onclick = e => {
+			this.$('header .icon#account').onclick = async e => {
 				e.stopPropagation();
+				body_class.add('menu');
+				await delay(300);
 				navigator.vibrate?.(10);
-				authenticate(true);
 			};
 
 			// Open form on day selection
 			this.addEventListener('date-selected', e => {
 				// Only open the form if the selected date is today or in the past
 				if (!e.detail?.date && e.detail?.date < new Date() && !DATE.isToday(e.detail?.date)) return;
-				b;
 
 				// Open the form for the selected date
 				this.openForm(e.detail?.date);
@@ -132,8 +132,6 @@ class CalendarPage extends CustomElement {
 
 		// If data for the selected date exists
 		if (day_data) {
-			console.log('Day data found:', day_data);
-
 			// Select the flow rate icon
 			form.$(`.rate#flow .icon[value="${day_data.flow}"]`)?.classList.add('selected');
 
@@ -186,7 +184,6 @@ class CalendarPage extends CustomElement {
 
 			// Update classes
 			const day_elem = this.$(`calendar-month[year="${date.getFullYear()}"][month="${date.getMonth()}"] .day[value="${date.getDate()}"]`);
-			console.log(day_elem);
 			day_elem.classList.remove('flow-0', 'flow-1', 'flow-2', 'flow-3', 'flow-4');
 			day_elem.classList.remove('pain-0', 'pain-1', 'pain-2', 'pain-3', 'pain-4');
 			day_elem.classList.add(`flow-${period_day.flow}`);

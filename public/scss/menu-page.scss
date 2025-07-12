@@ -1,0 +1,13 @@
+menu-page {
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+	user-select: none;
+	background-color: var(--bg-2);
+}
+
+#menu-back.icon {
+	align-self: flex-end;
+}

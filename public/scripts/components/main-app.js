@@ -8,14 +8,17 @@ class MainApp extends CustomElement {
 
 		// Wait for DOM to be ready
 		this.whenReady(async () => {
-			// Log every storage change
-			STORAGE.onChange(console.log);
-
-			// We want user to be authenticated to use the app
-			authenticate();
+			// // Log every storage change
+			// STORAGE.onChange(console.log);
 
 			// Set the inner HTML
-			this.innerHTML = html`<calendar-page />`;
+			this.innerHTML = html`
+				<menu-page />
+				<calendar-page />
+			`;
+
+			// Show the menu page if not signed in
+			body_class.toggle('menu', !userSignedIn());
 		});
 	}
 
