@@ -16,16 +16,36 @@ class CalendarPage extends CustomElement {
 				</header>
 
 				<div class="calendar"></div>
+
+				<div class="form"></div>
 			`;
 
 			// Populate the calendar with months
 			this.populate();
 
-			// Open menu on header icon click
+			// Authenticate on account click
 			this.$('header .icon#account').onclick = e => {
 				e.stopPropagation();
 				navigator.vibrate?.(10);
 				authenticate(true);
+			};
+
+			// Open form on day selection
+			this.addEventListener('date-selected', e => {
+				// Only open the form if the selected date is today or in the past
+				if (!e.detail?.date && e.detail?.date < new Date() && !DATE.isToday(e.detail?.date)) return;
+				b;
+
+				// Open the form for the selected date
+				this.openForm(e.detail?.date);
+			});
+
+			// Close form on click outside
+			this.onclick = e => {
+				if (body_class.contains('form-open') && !e.target.closest('.form')) {
+					body_class.remove('form-open');
+					$('.day.selected')?.classList.remove('selected');
+				}
 			};
 
 			// Bloom the logo
@@ -61,8 +81,6 @@ class CalendarPage extends CustomElement {
 			const year = date.getFullYear();
 			const month = date.getMonth();
 
-			console.log(`${year} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month]}`);
-
 			$('.calendar').appendChild(render(html`<calendar-month year="${year}" month="${month}" />`));
 		}
 
@@ -73,6 +91,142 @@ class CalendarPage extends CustomElement {
 				block: 'start'
 			});
 		});
+	}
+
+	// Open form for selected date
+	async openForm(date) {
+		const form = this.$('.form');
+
+		// Get month data for the selected date
+		const month_data = await app.getMonthData(date.getFullYear(), date.getMonth());
+		const day_data = month_data[date.toISOString().split('T')[0]];
+
+		form.innerHTML = html`
+			<h3 class="date">${date.getDate()} ${CalendarMonth.MONTHS[date.getMonth()]} ${date.getFullYear()}</h3>
+
+			<div class="form-actions">
+				<h3>Flux :</h3>
+				<div class="rate" id="flow">
+					<span class="icon" value="4">water_drop</span>
+					<span class="icon" value="3">water_drop</span>
+					<span class="icon" value="2">water_drop</span>
+					<span class="icon" value="1">water_drop</span>
+					<span class="icon" value="0">water_drop</span>
+				</div>
+			</div>
+
+			<div class="form-actions">
+				<h3>Douleur :</h3>
+				<div class="rate" id="pain">
+					<span class="icon" value="4">bolt</span>
+					<span class="icon" value="3">bolt</span>
+					<span class="icon" value="2">bolt</span>
+					<span class="icon" value="1">bolt</span>
+					<span class="icon" value="0">bolt</span>
+				</div>
+			</div>
+
+			<span class="btn disabled" id="save"><h3>Enregistrer</h3></span>
+			<span class="btn hidden" id="delete"><h3>Supprimer</h3></span>
+		`;
+
+		// If data for the selected date exists
+		if (day_data) {
+			console.log('Day data found:', day_data);
+
+			// Select the flow rate icon
+			form.$(`.rate#flow .icon[value="${day_data.flow}"]`)?.classList.add('selected');
+
+			// Select the pain rate icon
+			form.$(`.rate#pain .icon[value="${day_data.pain}"]`)?.classList.add('selected');
+
+			// Show the delete button
+			form.$('.btn#delete').classList.remove('hidden');
+			form.$('.btn#save').classList.add('hidden');
+			form.$('.btn#save').classList.remove('disabled');
+		}
+
+		// Rate click
+		form.$$('.rate .icon').forEach(icon => {
+			icon.onclick = e => {
+				e.stopPropagation();
+
+				// Select the icon
+				icon.parentElement.$('.icon.selected')?.classList.remove('selected');
+				icon.classList.toggle('selected');
+
+				// Check if both rates have a value
+				const selected = form.$$('.rate .icon.selected');
+				if (selected.length === 2) $('.btn#save').classList.remove('disabled');
+
+				// Hide delete button
+				form.$('.btn#delete').classList.add('hidden');
+				form.$('.btn#save').classList.remove('hidden');
+			};
+		});
+
+		// Save button click
+		form.$('.btn#save').onclick = async e => {
+			e.stopPropagation();
+			if (form.$('.btn#save').classList.contains('disabled')) return;
+
+			// Get the selected rates
+			const flow_rate = form.$$('.rate')[0].querySelector('.icon.selected')?.getAttribute('value') || '0';
+			const pain_rate = form.$$('.rate')[1].querySelector('.icon.selected')?.getAttribute('value') || '0';
+
+			const period_day = {
+				date: date.toISOString().split('T')[0],
+				flow: parseInt(flow_rate),
+				pain: parseInt(pain_rate)
+			};
+
+			// Close the form
+			body_class.remove('form-open');
+			$('.day.selected')?.classList.remove('selected');
+
+			// Update classes
+			const day_elem = this.$(`calendar-month[year="${date.getFullYear()}"][month="${date.getMonth()}"] .day[value="${date.getDate()}"]`);
+			console.log(day_elem);
+			day_elem.classList.remove('flow-0', 'flow-1', 'flow-2', 'flow-3', 'flow-4');
+			day_elem.classList.remove('pain-0', 'pain-1', 'pain-2', 'pain-3', 'pain-4');
+			day_elem.classList.add(`flow-${period_day.flow}`);
+			day_elem.classList.add(`pain-${period_day.pain}`);
+
+			// Get the month data
+			const month_data = await app.getMonthData(date.getFullYear(), date.getMonth());
+
+			// Set the period day in the month data
+			month_data[period_day.date] = period_day;
+
+			// Save the month data
+			await app.saveMonthData(date.getFullYear(), date.getMonth(), month_data);
+		};
+
+		// Delete button click
+		form.$('.btn#delete').onclick = async e => {
+			e.stopPropagation();
+
+			// Get the month data
+			const month_data = await app.getMonthData(date.getFullYear(), date.getMonth());
+
+			// Remove the period day from the month data
+			delete month_data[date.toISOString().split('T')[0]];
+
+			// Save the month data
+			await app.saveMonthData(date.getFullYear(), date.getMonth(), month_data);
+
+			// Close the form
+			body_class.remove('form-open');
+			$('.day.selected')?.classList.remove('selected');
+
+			// Remove classes from the day element
+			const day_elem = this.$(`calendar-month[year="${date.getFullYear()}"][month="${date.getMonth()}"] .day[value="${date.getDate()}"]`);
+			day_elem.classList.remove('flow-0', 'flow-1', 'flow-2', 'flow-3', 'flow-4');
+			day_elem.classList.remove('pain-0', 'pain-1', 'pain-2', 'pain-3', 'pain-4');
+		};
+
+		// Open the form
+		body_class.add('form-open');
 	}
 }
 

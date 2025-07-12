@@ -49,17 +49,144 @@ calendar-month {
 				align-items: center;
 				justify-content: center;
 				border-radius: 0.5rem;
-				outline: 2px solid var(--bg-1);
+				border: 2px solid var(--bg-1);
 				outline-offset: -2px;
 
 				&.today {
-					outline: 2px solid var(--txt-2);
+					border: 2px solid var(--txt-2);
 				}
 
 				&.empty {
 					opacity: 0.3;
 				}
+
+				&.selected {
+					border: 2px dashed var(--txt-2);
+				}
+
+				&.flow-0 {
+					background-color: var(--red-trans-8);
+				}
+
+				&.flow-1 {
+					background-color: var(--red-trans-6);
+				}
+
+				&.flow-2 {
+					background-color: var(--red-trans-4);
+				}
+
+				&.flow-3 {
+					background-color: var(--red-trans-2);
+					color: var(--bg-1);
+				}
+
+				&.flow-4 {
+					background-color: var(--red);
+					color: var(--bg-1);
+				}
 			}
 		}
+	}
+}
+
+.form {
+	position: fixed;
+	bottom: 0;
+	width: 100%;
+	max-width: 500px;
+	background-color: var(--red);
+	color: var(--bg-2);
+	border-top-left-radius: 2rem;
+	border-top-right-radius: 2rem;
+	padding: 1rem;
+	padding-top: 2.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	box-shadow: 0 0 1rem #00000033;
+	transition: transform 0.3s ease;
+	transform: translateY(calc(100%));
+	user-select: none;
+
+	&::after {
+		content: '';
+		position: absolute;
+		top: 1rem;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 2rem;
+		height: 0.4rem;
+		background-color: black;
+		border-radius: 0.25rem;
+		opacity: 0.2;
+	}
+
+	h3.date {
+		text-align: center;
+		margin-bottom: 1rem;
+	}
+
+	.form-actions {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+
+		.rate {
+			display: flex;
+			align-items: center;
+			flex-direction: row-reverse;
+			gap: 0.5rem;
+
+			.icon {
+				font-size: 2.5rem;
+				opacity: 0.3;
+			}
+
+			.icon.selected {
+				opacity: 1;
+
+				& ~ .icon {
+					opacity: 1;
+				}
+			}
+		}
+	}
+
+	.btn {
+		background-color: var(--bg-2);
+		color: var(--red);
+		padding: 1rem;
+		border-radius: 0.75rem;
+		text-align: center;
+		margin-top: 1rem;
+
+		&.disabled {
+			opacity: 0.8;
+			pointer-events: none;
+		}
+
+		&.hidden {
+			display: none;
+		}
+
+		&#delete {
+			background-color: transparent;
+			color: var(--bg-2);
+			outline: 4px solid var(--bg-2);
+			outline-offset: -4px;
+		}
+	}
+}
+
+body.form-open {
+	header,
+	.calendar {
+		opacity: 0.3;
+		pointer-events: none;
+	}
+
+	.form {
+		transform: translateY(0);
 	}
 }
