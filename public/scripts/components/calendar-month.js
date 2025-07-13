@@ -80,11 +80,11 @@ class CalendarMonth extends CustomElement {
 			}
 
 			// Get month data from storage
-			const month_data = await app.getMonthData(year, month);
+			this.data = await app.getMonthData(year, month);
 
 			// For each entry in the month data
-			for (const date in month_data) {
-				const day_data = month_data[date];
+			for (const date in this.data) {
+				const day_data = this.data[date];
 				const date_obj = new Date(date);
 				const day_elem = this.$(`.day[value="${date_obj.getDate()}"]`);
 
