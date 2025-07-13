@@ -3,6 +3,7 @@
 @import './account-panel.scss';
 @import './calendar-page.scss';
 @import './menu-page.scss';
+@import './analysis-page.scss';
 @import './logo.scss';
 
 html,
@@ -41,6 +42,14 @@ body:not(.menu) menu-page {
 
 body.menu calendar-page {
 	transform: translateX(100%);
+}
+
+body:not(.analysis) analysis-page {
+	transform: translateX(100%);
+}
+
+body.analysis calendar-page {
+	transform: translateX(-100%);
 }
 
 @media (min-width: 501px) {

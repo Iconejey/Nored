@@ -6,13 +6,13 @@ class CalendarPage extends CustomElement {
 		this.whenReady(async () => {
 			this.innerHTML = html`
 				<header>
-					<span id="account" class="icon">short_text</span>
+					<span id="menu" class="icon">short_text</span>
 					<div class="logo hidden">
 						<img class="logo-drop" src="/drop.svg" />
 						<img class="logo-drop" src="/drop.svg" />
 						<img class="logo-drop" src="/drop.svg" />
 					</div>
-					<span id="today" class="icon">wb_sunny</span>
+					<span id="analysis" class="icon">wb_sunny</span>
 				</header>
 
 				<div class="calendar"></div>
@@ -23,10 +23,18 @@ class CalendarPage extends CustomElement {
 			// Populate the calendar with months
 			if (userSignedIn()) this.populate();
 
-			// Authenticate on account click
-			this.$('header .icon#account').onclick = async e => {
+			// Open menu page on menu icon click
+			this.$('header #menu.icon').onclick = async e => {
 				e.stopPropagation();
 				body_class.add('menu');
+				await delay(300);
+				navigator.vibrate?.(10);
+			};
+
+			// Open analysis page on analysis icon click
+			this.$('header #analysis.icon').onclick = async e => {
+				e.stopPropagation();
+				body_class.add('analysis');
 				await delay(300);
 				navigator.vibrate?.(10);
 			};

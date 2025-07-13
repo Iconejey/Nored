@@ -15,6 +15,7 @@ class MainApp extends CustomElement {
 			this.innerHTML = html`
 				<menu-page />
 				<calendar-page />
+				<analysis-page />
 			`;
 
 			// Show the menu page if not signed in
