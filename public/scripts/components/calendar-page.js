@@ -101,6 +101,19 @@ class CalendarPage extends CustomElement {
 		});
 	}
 
+	// Get a day tile elem from a date
+	getDayTile(date) {
+		const year = date.getFullYear();
+		const month = date.getMonth();
+		const day = date.getDate();
+
+		// Handle navigator removing attributes with "0" as value (january)
+		if (month === 0) return this.$(`calendar-month[year="${year}"][month] .day[value="${day}"]`);
+
+		// Return the day tile element
+		return this.$(`calendar-month[year="${year}"][month="${month}"] .day[value="${day}"]`);
+	}
+
 	// Open form for selected date
 	async openForm(date) {
 		const form = this.$('.form');
@@ -191,11 +204,11 @@ class CalendarPage extends CustomElement {
 			$('.day.selected')?.classList.remove('selected');
 
 			// Update classes
-			const day_elem = this.$(`calendar-month[year="${date.getFullYear()}"][month="${date.getMonth()}"] .day[value="${date.getDate()}"]`);
-			day_elem.classList.remove('flow-0', 'flow-1', 'flow-2', 'flow-3', 'flow-4');
-			day_elem.classList.remove('pain-0', 'pain-1', 'pain-2', 'pain-3', 'pain-4');
-			day_elem.classList.add(`flow-${period_day.flow}`);
-			day_elem.classList.add(`pain-${period_day.pain}`);
+			let day_tile = this.getDayTile(date);
+			day_tile.classList.remove('flow-0', 'flow-1', 'flow-2', 'flow-3', 'flow-4');
+			day_tile.classList.remove('pain-0', 'pain-1', 'pain-2', 'pain-3', 'pain-4');
+			day_tile.classList.add(`flow-${period_day.flow}`);
+			day_tile.classList.add(`pain-${period_day.pain}`);
 
 			// Get the month data
 			const month_data = await app.getMonthData(date.getFullYear(), date.getMonth());
