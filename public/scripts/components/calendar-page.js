@@ -43,7 +43,7 @@ class CalendarPage extends CustomElement {
 			// Open form on day selection
 			this.addEventListener('date-selected', e => {
 				// Only open the form if the selected date is today or in the past
-				if (!e.detail?.date && e.detail?.date < new Date() && !DATE.isToday(e.detail?.date)) return;
+				if (e.detail?.date > new Date() && !DATE.isToday(e.detail?.date)) return;
 
 				// Open the form for the selected date
 				this.openForm(e.detail?.date);
@@ -255,7 +255,7 @@ class CalendarPage extends CustomElement {
 			$('.day.selected')?.classList.remove('selected');
 
 			// Remove classes from the day element
-			const day_elem = this.$(`calendar-month[year="${date.getFullYear()}"][month="${date.getMonth()}"] .day[value="${date.getDate()}"]`);
+			const day_elem = this.getDayTile(date);
 			day_elem.classList.remove('flow-0', 'flow-1', 'flow-2', 'flow-3', 'flow-4');
 			day_elem.classList.remove('pain-0', 'pain-1', 'pain-2', 'pain-3', 'pain-4');
 		};
