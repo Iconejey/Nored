@@ -4,6 +4,10 @@ class CalendarMonth extends CustomElement {
 	constructor() {
 		super();
 
+		this.ready_promise = new Promise(resolve => {
+			this.resolve_ready = resolve;
+		});
+
 		this.whenReady(async () => {
 			// Get the first day of the month
 			const year = parseInt(this.year);
@@ -91,6 +95,9 @@ class CalendarMonth extends CustomElement {
 				day_elem.classList.add(`flow-${day_data.flow || 0}`);
 				day_elem.classList.add(`pain-${day_data.pain || 0}`);
 			}
+
+			// Resolve the ready promise
+			this.resolve_ready();
 		});
 	}
 

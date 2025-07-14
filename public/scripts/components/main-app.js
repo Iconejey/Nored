@@ -20,6 +20,9 @@ class MainApp extends CustomElement {
 
 			// Show the menu page if not signed in
 			body_class.toggle('menu', !userSignedIn());
+
+			// Wait for calendar page to be ready
+			this.$('calendar-page').addEventListener('ready', () => this.analyzeData());
 		});
 	}
 
@@ -112,24 +115,17 @@ class MainApp extends CustomElement {
 		let stddev = Math.sqrt(variance);
 		recap += `Écart type : ${stddev.toFixed(2)} jours\n`;
 
-		// Filter out days between cycles that are more than 45 days
-		number_of_days_between_cycles = number_of_days_between_cycles.filter(days => days <= 45);
-		recap += `\nMême calcul si on ignore les cycles de plus de 45 jours (peut-être des oublis de saisie) :\n`;
+		// Add the number of days since the last period started
+		recap += `\nJours depuis le début des dernières règles : ${Math.round((new Date() - new Date(last_cycle_first_entry.date)) / (24 * 60 * 60 * 1000))}`;
 
-		// Calculate the average number of days between cycles
-		average_days_between_cycles = number_of_days_between_cycles.reduce((a, b) => a + b, 0) / number_of_days_between_cycles.length;
-		recap += `\nDurée moyenne des cycles : ${average_days_between_cycles.toFixed(2)} jours\n`;
-
-		// Calculate the standard deviation of the number of days between cycles
-		variance = number_of_days_between_cycles.reduce((acc, val) => acc + Math.pow(val - average_days_between_cycles, 2), 0) / number_of_days_between_cycles.length;
-		stddev = Math.sqrt(variance);
-		recap += `Écart type : ${stddev.toFixed(2)} jours\n`;
-
-		return recap.trim();
+		return recap;
 	}
 
 	// Analyze the data using AI
 	async analyzeData() {
+		// Analyze button
+		const analysis_button = this.$('#analysis.icon');
+
 		// Get the data recap
 		const recap = await this.getDataRecap();
 		if (!recap) return;
@@ -150,18 +146,21 @@ class MainApp extends CustomElement {
 				- Une estimation du flux (de 0 à 4).
 				- Une estimation de la douleur (de 0 à 4).
 				- Une estimation du nombre de jours restants avant la fin des règles.
-				- Une courte description de la phase actuelle du cycle (ce que c'est, la durée moyenne, les conséquences sur le corps, les émotions, la libido, etc.).
 
-			- Une courte analyse des données du cycle menstruel, en se basant sur les données fournies, en expliquant les tendances, les anomalies, et en donnant des conseils si nécessaire. Ajouter des \\n pour séparer les paragraphes.
+			- Une brève description de la phase actuelle du cycle (ce que c'est, la durée moyenne, les conséquences sur le corps, les émotions, la libido, etc.).
 
-			- Une estimation des deux prochains cycles menstruels (et celui actuel si en phase de règles), avec le même format de jours que les données brutes (date;flux;douleur), en se basant sur les données fournies.
+			- Une brève analyse des données du cycle menstruel, en se basant sur les données fournies, en expliquant les tendances, les anomalies, et en donnant des conseils si nécessaire.
+
+			Pour les deux derniers points, utilise des phrases simples et sépare les paragraphes par des sauts de ligne pour une meilleure lisibilité.
+
+			- Une estimation des deux prochains cycles menstruels (et celui actuel si en phase de règles), avec le même format de jours que les données brutes (date;flux;douleur), en se basant sur les données fournies. Les valeurs 0 ne veulent pas dire qu'il n'y a pas de règles, mais que le flux ou la douleur sont très faibles. Les jours sans règles ne sont simplement pas renseignés.
 
 			Voici un exemple de resultat et format attendu (les valeurs sont fictives et à ne pas prendre en compte) :
 
 			\`\`\`
 				<days-since-last-period>2</days-since-last-period>
 				<average-cycle-duration>28</average-cycle-duration>
-				<next-period-date>2023-10-15</next-period-date>
+				<next-period-date>2023-11-07</next-period-date>
 				<pregnancy-risk>moyen</pregnancy-risk>
 				<current-phase>règles</current-phase>
 				<period-flow>3</period-flow>
@@ -197,36 +196,79 @@ class MainApp extends CustomElement {
 			${recap}
 		`;
 
-		// // Generate the AI analysis
-		// const result = await AI.generate({ system, user });
+		// Get result from local storage if available
+		let result = localStorage.getItem('ai-analysis');
+		let current_date = new Date().toISOString().split('T')[0];
+		let new_day = localStorage.getItem('ai-analysis-date') !== current_date;
 
-		// Fake AI analysis result for dev purposes
-		return `
-			AI analysis result: \`\`\`
-			<days-since-last-period>16</days-since-last-period>
-			<average-cycle-duration>22</average-cycle-duration>
-			<next-period-date>2025-07-20</next-period-date>
-			<pregnancy-risk>très faible</pregnancy-risk>
-			<current-phase>lutéale</current-phase>
-			<phase-description>La phase lutéale commence après l'ovulation et dure jusqu'au début des prochaines règles. Sa durée est généralement stable, autour de 10 à 16 jours (souvent 14 jours). Pendant cette phase, le corps produit principalement de la progestérone, qui prépare l'utérus à une éventuelle grossesse. En l'absence de fécondation, les niveaux d'hormones chutent, provoquant le détachement de la muqueuse utérine (les règles). Cette phase peut s'accompagner de symptômes prémenstruels (syndrome prémenstruel - SPM) tels que des ballonnements, une sensibilité des seins, des changements d'humeur (irritabilité, anxiété), de la fatigue ou des fringales. La libido a tendance à diminuer après le pic de la phase d'ovulation.</phase-description>
-			<cycle-analysis>Les données fournies montrent une grande variabilité dans la durée de vos cycles, allant de 18 à 54 jours. Les cycles de 50 et 54 jours se démarquent nettement des autres, qui sont compris entre 18 et 27 jours. L'analyse complémentaire suggère d'ignorer ces cycles plus longs, ce qui semble pertinent si ce sont des exceptions ou potentiellement liés à des oublis de saisie. En excluant ces valeurs extrêmes, la durée moyenne de vos cycles est d'environ 22 jours, ce qui est plus court que la moyenne communément citée de 28 jours, mais reste dans une fourchette normale. L'écart type réduit (4.02 jours vs 11.34 jours) pour les cycles plus courts indique une meilleure régularité parmi ceux-ci.
+		// Generate the AI analysis
+		if (!result || new_day) result = await AI.generate({ system, user });
 
-			Un point notable dans vos données est l'absence totale de douleur (toujours notée 0) pendant vos règles, même lors des jours de flux abondant (3 ou 4). Si cela correspond à la réalité, c'est une caractéristique positive de vos cycles. Le flux semble varier d'un cycle à l'autre en termes de durée (de 1 à 6 jours) et d'intensité maximale, mais suit globalement un schéma typique de début léger à modéré, pic, puis diminution.
+		// Save the result to local storage
+		localStorage.setItem('ai-analysis', result);
+		localStorage.setItem('ai-analysis-date', current_date);
 
-			Si les cycles très longs sont fréquents, il serait pertinent de consulter un professionnel de santé, car une grande irrégularité peut parfois indiquer un déséquilibre hormonal. Si ces cycles longs sont rares et que vos cycles se stabilisent autour de 18-27 jours, cela peut simplement être votre rythme naturel, bien que plus court que la moyenne. Continuez à suivre vos cycles pour identifier si la tendance est à la stabilisation ou à la persistance des cycles très longs ou très courts.</cycle-analysis>
-			<next-cycles>
-			2025-07-20;2;0
-			2025-07-21;4;0
-			2025-07-22;2;0
-			2025-07-23;1;0
+		// Get a given tag's value from the AI result
+		const getTagValue = tag => {
+			const regex = new RegExp(`<${tag}>(.*?)</${tag}>`, 's');
+			const match = result.match(regex);
+			const val = match ? match[1].trim() : null;
 
-			2025-08-11;2;0
-			2025-08-12;4;0
-			2025-08-13;2;0
-			2025-08-14;1;0
-			</next-cycles>
-			\`\`\`
-		`;
+			// If val is a number, parse it
+			if (val !== null && !isNaN(val)) return parseFloat(val);
+			return val;
+		};
+
+		// Set analyse button icon
+		analysis_button.classList.remove('color-spin');
+		analysis_button.innerText = 'wb_sunny';
+		const period_flow = (getTagValue('period-flow') || -1) + 1;
+		analysis_button.innerText = ['wb_sunny', 'partly_cloudy_day', 'cloud', 'rainy', 'rainy', 'thunderstorm'][period_flow];
+		analysis_button.setAttribute('style', `color: var(--${['yellow', 'orange', 'orange', 'red', 'red', 'purple'][period_flow]})`);
+		analysis_button.classList.toggle('slow-spin', period_flow === 0);
+
+		// Get the next period dates
+		const next_cycles = getTagValue('next-cycles')
+			.split('\n')
+			.filter(Boolean)
+			.map(line => {
+				const [date, flow, pain] = line.trim().split(';');
+				return { date, flow: parseInt(flow), pain: parseInt(pain) };
+			});
+
+		console.log(next_cycles);
+
+		// Calculate the cycle duration
+		const days_since_last_period = getTagValue('days-since-last-period');
+		const days_until_next_period = Math.round((new Date(getTagValue('next-period-date')) - new Date()) / (24 * 60 * 60 * 1000));
+		const total_cycle_duration = days_since_last_period + days_until_next_period;
+
+		// Set analysis clock progress
+		const progress = Math.ceil((days_since_last_period / total_cycle_duration) * 100);
+		this.$('#analysis-clock .circular-progress').setAttribute('style', `--progress-value: ${progress}`);
+
+		// Set clock content
+		this.$('#analysis-clock .clock-day-val').innerText = getTagValue('days-since-last-period');
+		this.$('#analysis-clock .clock-period').innerText = `Règles dans ${days_until_next_period} jours`;
+		this.$('#analysis-clock .clock-pregnancy').innerText = `Risque de grossesse ${getTagValue('pregnancy-risk')}`;
+
+		// Set phase
+		this.$('.analysis-phase').innerText = getTagValue('current-phase');
+		for (const p of getTagValue('phase-description').replaceAll('\\n', '\n').split(/\n+/)) {
+			const p_el = document.createElement('p');
+			p_el.innerText = p.trim();
+			this.$('#analysis-phase-container').appendChild(p_el);
+		}
+
+		// Set analysis
+		for (const p of getTagValue('cycle-analysis').replaceAll('\\n', '\n').split(/\n+/)) {
+			const p_el = document.createElement('p');
+			p_el.innerText = p.trim();
+			this.$('#cycle-analysis-container').appendChild(p_el);
+		}
+
+		// Open analysis page for dev purposes
+		// body_class.add('analysis');
 	}
 }
 

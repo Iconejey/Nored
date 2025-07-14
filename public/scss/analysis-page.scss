@@ -1,13 +1,128 @@
 analysis-page {
-	padding: 1rem;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 1rem;
+	gap: 2rem;
 	user-select: none;
 	background-color: var(--bg-2);
+	overflow-y: scroll;
+	padding-bottom: 4rem;
+
+	header {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		padding: 1rem;
+		justify-content: space-between;
+		color: var(--txt-1);
+
+		#analysis-date {
+			font-size: 1.2rem;
+		}
+
+		.icon:not(:active, :hover) {
+			opacity: 0.3;
+		}
+	}
 }
 
-#analysis-back.icon {
-	align-self: flex-start;
+#analysis-clock {
+	width: 100%;
+	height: fit-content;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+
+	.circular-progress {
+		width: var(--size);
+		height: var(--size);
+		--size: 85vw;
+		--half-size: calc(var(--size) / 2);
+		--stroke-width: 10px;
+		--radius: calc((var(--size) - var(--stroke-width)) / 2);
+		--circumference: calc(var(--radius) * pi * 2);
+		--dash: calc((var(--progress) * var(--circumference)) / 100);
+
+		circle {
+			cx: var(--half-size);
+			cy: var(--half-size);
+			r: var(--radius);
+			stroke-width: var(--stroke-width);
+			fill: none;
+			stroke-linecap: round;
+
+			&.bg {
+				stroke: var(--bg-4);
+			}
+
+			&.fg {
+				transform: rotate(-90deg);
+				transform-origin: var(--half-size) var(--half-size);
+				stroke-dasharray: var(--dash) calc(var(--circumference) - var(--dash));
+				transition: stroke-dasharray 0.3s ease-out 0s;
+				stroke: var(--red);
+			}
+		}
+	}
+
+	.clock-content {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		font-size: 4.5vw;
+		gap: 0.5rem;
+		text-align: center;
+		color: var(--txt-2);
+
+		.clock-day-val {
+			font-size: 5em;
+			color: var(--txt-1);
+		}
+
+		.clock-period {
+			color: var(--red);
+		}
+
+		.clock-pregnancy {
+			font-size: 0.9em;
+		}
+	}
+}
+
+h3 {
+	color: var(--txt-1);
+}
+
+p {
+	margin-top: 1rem;
+	line-height: 1.6;
+}
+
+.analysis-container {
+	width: 100%;
+	padding: 0 1rem;
+}
+
+body.analysis .circular-progress {
+	animation: progress-animation 1s ease 0s 1 forwards;
+}
+
+@property --progress {
+	syntax: '<number>';
+	inherits: false;
+	initial-value: 0;
+}
+
+@keyframes progress-animation {
+	from {
+		--progress: 0;
+	}
+	to {
+		--progress: var(--progress-value);
+	}
 }

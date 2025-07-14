@@ -12,7 +12,7 @@ class CalendarPage extends CustomElement {
 						<img class="logo-drop" src="/drop.svg" />
 						<img class="logo-drop" src="/drop.svg" />
 					</div>
-					<span id="analysis" class="icon">wb_sunny</span>
+					<span id="analysis" class="icon color-spin">magic_button</span>
 				</header>
 
 				<div class="calendar"></div>
@@ -34,6 +34,7 @@ class CalendarPage extends CustomElement {
 			// Open analysis page on analysis icon click
 			this.$('header #analysis.icon').onclick = async e => {
 				e.stopPropagation();
+				if (e.target.classList.contains('color-spin')) return;
 				body_class.add('analysis');
 				await delay(300);
 				navigator.vibrate?.(10);
@@ -56,6 +57,16 @@ class CalendarPage extends CustomElement {
 				}
 			};
 
+			// Animate analysis btn color
+			let current_color = null;
+			setInterval(() => {
+				if (!this.$('#analysis.icon').classList.contains('color-spin')) return;
+				const colors = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple'].filter(color => color !== current_color);
+				const random_color = colors[Math.floor(Math.random() * colors.length)];
+				current_color = random_color;
+				this.$('#analysis.icon').setAttribute('style', `color: var(--${random_color})`);
+			}, 300);
+
 			// Bloom the logo
 			await delay(500);
 			this.$('.logo').classList.remove('hidden');
@@ -73,6 +84,12 @@ class CalendarPage extends CustomElement {
 
 			// Refresh app on logo double click
 			this.$('.logo').ondblclick = e => location.reload();
+
+			// Await for all calendar months to be ready
+			await Promise.all([...this.$$('calendar-month')].map(month => month.ready_promise));
+
+			// Dispatch ready event
+			this.dispatchEvent(new CustomEvent('ready', { bubbles: true }));
 		});
 	}
 

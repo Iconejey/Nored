@@ -53,6 +53,10 @@ body {
 	&.spin {
 		animation: spin 1s linear infinite;
 	}
+
+	&.slow-spin {
+		animation: spin 20s linear infinite;
+	}
 }
 
 @keyframes spin {
