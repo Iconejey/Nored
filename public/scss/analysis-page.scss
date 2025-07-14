@@ -24,6 +24,15 @@ analysis-page {
 			opacity: 0.3;
 		}
 	}
+
+	h3 {
+		color: var(--txt-1);
+	}
+
+	p {
+		margin-top: 1rem;
+		line-height: 1.6;
+	}
 }
 
 #analysis-clock {
@@ -93,15 +102,6 @@ analysis-page {
 			font-size: 0.9em;
 		}
 	}
-}
-
-h3 {
-	color: var(--txt-1);
-}
-
-p {
-	margin-top: 1rem;
-	line-height: 1.6;
 }
 
 .analysis-container {

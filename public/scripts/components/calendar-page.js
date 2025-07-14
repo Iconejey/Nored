@@ -224,6 +224,7 @@ class CalendarPage extends CustomElement {
 			let day_tile = this.getDayTile(date);
 			day_tile.classList.remove('flow-0', 'flow-1', 'flow-2', 'flow-3', 'flow-4');
 			day_tile.classList.remove('pain-0', 'pain-1', 'pain-2', 'pain-3', 'pain-4');
+			day_tile.classList.remove('ai-flow-0', 'ai-flow-1', 'ai-flow-2', 'ai-flow-3', 'ai-flow-4');
 			day_tile.classList.add(`flow-${period_day.flow}`);
 			day_tile.classList.add(`pain-${period_day.pain}`);
 

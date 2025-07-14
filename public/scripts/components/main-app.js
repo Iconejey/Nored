@@ -137,7 +137,6 @@ class MainApp extends CustomElement {
 					<span class="clock-day-text">Jour du cycle</span>
 					<span class="clock-day-val">0</span>
 					<span class="clock-period">Aucune donnée</span>
-					<span class="clock-pregnancy"></span>
 				</div>
 			`;
 
@@ -165,6 +164,8 @@ class MainApp extends CustomElement {
 				- Une estimation de la douleur (de 0 à 4).
 				- Une estimation du nombre de jours restants avant la fin des règles.
 
+			Si tu n'as pas assez de données pour fournir une estimation, base toi sur une moyenne de 5 jours de règles et 28 jours de cycle.
+
 			- Une brève description de la phase actuelle du cycle (ce que c'est, la durée moyenne, les conséquences sur le corps, les émotions, la libido, etc.).
 
 			- Une brève analyse des données du cycle menstruel, en se basant sur les données fournies, en expliquant les tendances, les anomalies, et en donnant des conseils si nécessaire.
@@ -173,7 +174,9 @@ class MainApp extends CustomElement {
 
 			- Une estimation des deux prochains cycles menstruels (et celui actuel si en phase de règles), avec le même format de jours que les données brutes (date;flux;douleur), en se basant sur les données fournies. Les valeurs 0 ne veulent pas dire qu'il n'y a pas de règles, mais que le flux ou la douleur sont très faibles. Les jours sans règles ne sont simplement pas renseignés.
 
-			Voici un exemple de resultat et format attendu (les valeurs sont fictives et à ne pas prendre en compte) :
+			N'ajoute pas de commentaires ou d'explications supplémentaires, juste les données demandées.
+
+			Voici un exemple de resultat et format attendu, toujours en français (les valeurs sont fictives et à ne pas prendre en compte) :
 
 			\`\`\`
 				<days-since-last-period>2</days-since-last-period>
@@ -242,7 +245,7 @@ class MainApp extends CustomElement {
 		analysis_button.innerText = 'wb_sunny';
 		const period_flow = (getTagValue('period-flow') || -1) + 1;
 		analysis_button.innerText = ['wb_sunny', 'partly_cloudy_day', 'cloud', 'rainy', 'rainy', 'thunderstorm'][period_flow];
-		analysis_button.setAttribute('style', `color: var(--${['yellow', 'orange', 'orange', 'red', 'red', 'purple'][period_flow]})`);
+		analysis_button.setAttribute('style', `color: var(--${['yellow', 'orange', 'orange', 'red', 'red', 'red'][period_flow]})`);
 		analysis_button.classList.toggle('slow-spin', period_flow === 0);
 
 		// Calculate the cycle duration
@@ -258,6 +261,10 @@ class MainApp extends CustomElement {
 		this.$('#analysis-clock .clock-day-val').innerText = getTagValue('days-since-last-period');
 		this.$('#analysis-clock .clock-period').innerText = `Règles dans ${days_until_next_period} jours`;
 		this.$('#analysis-clock .clock-pregnancy').innerText = `Risque de grossesse ${getTagValue('pregnancy-risk')}`;
+
+		// If days left in period is not null, show it in the clock
+		const days_left_in_period = getTagValue('days-left-in-period');
+		if (days_left_in_period !== null) this.$('#analysis-clock .clock-period').innerText = `Encore ${days_left_in_period} jours de règles`;
 
 		// Set phase
 		this.$('.analysis-phase').innerText = getTagValue('current-phase');
@@ -284,9 +291,14 @@ class MainApp extends CustomElement {
 			});
 
 		// For each next cycle entry
-		for (const entry of next_cycles) {
+		entries: for (const entry of next_cycles) {
 			// Select the day tile for the entry date
 			const day_tile = this.$('calendar-page').getDayTile(new Date(entry.date));
+
+			// If this days already has a flow class, skip it
+			for (let i = 0; i < 5; i++) {
+				if (day_tile.classList.contains(`flow-${i}`)) continue entries;
+			}
 
 			// Add classes
 			day_tile.classList.add(`ai-flow-${entry.flow}`, `ai-pain-${entry.pain}`);
