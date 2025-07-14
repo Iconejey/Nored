@@ -39,7 +39,7 @@ analysis-page {
 		height: var(--size);
 		--size: 85vw;
 		--half-size: calc(var(--size) / 2);
-		--stroke-width: 10px;
+		--stroke-width: 2vw;
 		--radius: calc((var(--size) - var(--stroke-width)) / 2);
 		--circumference: calc(var(--radius) * pi * 2);
 		--dash: calc((var(--progress) * var(--circumference)) / 100);
@@ -78,6 +78,7 @@ analysis-page {
 		gap: 0.5rem;
 		text-align: center;
 		color: var(--txt-2);
+		width: 50vw;
 
 		.clock-day-val {
 			font-size: 5em;
