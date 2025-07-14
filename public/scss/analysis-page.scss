@@ -35,10 +35,6 @@ analysis-page {
 
 	.panel-wrapper {
 		align-self: stretch;
-
-		& + .panel-wrapper {
-			margin-top: -0.5rem;
-		}
 	}
 
 	.cycle-graph {
@@ -87,6 +83,20 @@ analysis-page {
 				height: calc(var(--graph-height) * var(--duration));
 				background-color: var(--red);
 			}
+		}
+	}
+
+	#analysis-questions {
+		color: var(--bg-2);
+		margin: 0 1rem;
+
+		.answer {
+			background-color: var(--red);
+			padding: 0.9rem;
+		}
+
+		.question {
+			background-color: var(--red);
 		}
 	}
 
@@ -192,6 +202,10 @@ analysis-page {
 
 	.analysis-info {
 		color: var(--yellow);
+	}
+
+	.panel-wrapper + .panel-wrapper {
+		margin-top: -0.5rem;
 	}
 }
 

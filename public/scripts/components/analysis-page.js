@@ -63,6 +63,11 @@ class AnalysisPage extends CustomElement {
 					</div>
 				</div>
 
+				<div id="analysis-questions" class="panel-wrapper">
+					<div class="answer panel">Bonjour ! Je m'appelle Nono et je suis là pour répondre à vos questions sur votre cycle menstruel.</div>
+					<basic-panel icon="magic_button" class="question" input="Que voulez-vous savoir ?" />
+				</div>
+
 				<div class="panel-wrapper" id="analysis-warning">
 					<basic-panel icon="warning" style="color: var(--yellow)"
 						>Cette analyse a été générée par l'IA avec les données que vous avez entrées. Elle n'est pas parfaite, ne vaut pas un avis médical et peut contenir des erreurs.</basic-panel

@@ -31,8 +31,13 @@ class BasicPanel extends CustomElement {
 			this.classList.add('panel');
 			// this.tabIndex = 1;
 			this.addEventListener('click', () => app.vibrate());
+
+			if (this.input) {
+				this.$('.label').setAttribute('contenteditable', 'true');
+				this.$('.label').setAttribute('input', this.input);
+			}
 		});
 	}
 }
 
-defineComponent(html`<basic-panel icon accent />`);
+defineComponent(html`<basic-panel icon accent input />`);

@@ -172,11 +172,11 @@ class MainApp extends CustomElement {
 			- Une estimation de la date des prochaines règles.
 			
 			- La phase actuelle (règles, folliculaire, ovulation, lutéale).
-			- Si en phase de règles :
-			- Une estimation du flux (de 0 à 4).
-			- Une estimation de la douleur (de 0 à 4).
-			- Une estimation du nombre de jours restants avant la fin des règles.
 			- Une brève description de la phase actuelle du cycle (ce que c'est, la durée moyenne, les conséquences sur le corps, les émotions, la libido, etc.).
+			- Si en phase de règles :
+				- Une estimation du flux (de 0 à 4).
+				- Une estimation de la douleur (de 0 à 4).
+				- Une estimation du nombre de jours restants avant la fin des règles.
 			
 			Si tu n'as pas assez de données pour fournir une estimation, base toi sur une moyenne de 5 jours de règles et 28 jours de cycle.
 
@@ -239,21 +239,21 @@ class MainApp extends CustomElement {
 		`;
 
 		// Get result from local storage if available
-		let result = localStorage.getItem('ai-analysis');
+		let analysis_result = localStorage.getItem('ai-analysis');
 		let current_date = new Date().toISOString().split('T')[0];
 		let new_day = localStorage.getItem('ai-analysis-date') !== current_date;
 
 		// Generate the AI analysis
-		if (!result || new_day) result = await AI.generate({ system, user });
+		if (!analysis_result || new_day) analysis_result = await AI.generate({ system, user });
 
 		// Save the result to local storage
-		localStorage.setItem('ai-analysis', result);
+		localStorage.setItem('ai-analysis', analysis_result);
 		localStorage.setItem('ai-analysis-date', current_date);
 
 		// Get a given tag's value from the AI result
 		const getTagValue = tag => {
 			const regex = new RegExp(`<${tag}>(.*?)</${tag}>`, 's');
-			const match = result.match(regex);
+			const match = analysis_result.match(regex);
 			const val = match ? match[1].trim() : null;
 
 			// If val is a number, parse it
@@ -297,6 +297,7 @@ class MainApp extends CustomElement {
 		// -------- Phase --------
 
 		// Set phase
+
 		this.$('.analysis-phase').innerText = getTagValue('current-phase');
 		for (const p of getTagValue('phase-description').replaceAll('\\n', '\n').split(/\n+/)) {
 			const p_el = document.createElement('p');
@@ -348,8 +349,6 @@ class MainApp extends CustomElement {
 		// Add cycles to graph
 		const graph = this.$('.cycle-graph');
 		for (let i = 0; i < number_of_days_between_cycles.length; i++) {
-			console.log(total_cycle_duration, longest_cycle, number_of_days_between_cycles[i]);
-
 			graph.innerHTML += html`
 				<div class="cycle">
 					<div class="cycle-total hidden" style="--duration: ${total_cycle_duration / longest_cycle}"></div>
@@ -370,6 +369,81 @@ class MainApp extends CustomElement {
 			p_el.innerText = p.trim();
 			this.$('#cycle-analysis-container').appendChild(p_el);
 		}
+
+		// -------- Questions --------
+
+		// Input event
+		$('#analysis-questions .question .label').oninput = async e => {
+			const val = e.target.innerText.trim();
+			if (!val) e.target.innerText = '';
+		};
+
+		// Chat history
+		const chat_history = ["Assistant: Bonjour ! Je m'appelle Nono et je suis là pour répondre à vos questions sur votre cycle menstruel."];
+
+		// Validate the question input
+		$('#analysis-questions .question .label').onkeydown = async e => {
+			// If enter key is pressed
+			if (e.key === 'Enter') {
+				// Prevent default behavior
+				e.preventDefault();
+
+				// Ignore if already waiting for an answer
+				if ($('#analysis-questions .question .main.icon').classList.contains('spin')) return;
+
+				// Spin the icon
+				$('#analysis-questions .question .main.icon').classList.add('spin');
+				$('#analysis-questions .question .main.icon').innerText = 'autorenew';
+
+				// Get the question
+				const question = e.target.innerText.trim();
+				chat_history.push(`User: ${question}`);
+
+				// Clear the input
+				e.target.innerText = '';
+
+				// AI system
+				const system = `
+					Tu es un assistant virtuel spécialisé dans les questions sur le cycle menstruel.
+					Ton nom est Nono et tu es là pour répondre aux questions des utilisatrices sur leur cycle menstruel.
+					Tu as accès aux données du cycle menstruel de l'utilisatrice, utilise-les pour répondre aux questions.
+					Tu peux également répondre aux questions générales sur le cycle menstruel, les règles, l'ovulation, la contraception, etc.
+					Ne dis pas bonjour si tu l'as déjà dit, ne te présente pas et ne dis pas que tu es un assistant virtuel.
+					Ne formate pas les réponses avec *, _ ou autres caractères spéciaux, juste du texte brut.
+					Tu peux cependant mettre des sauts de ligne pour séparer les paragraphes et des "-" pour faire des listes à puces.
+				`;
+
+				// AI user
+				let user = `
+					# Données du cycle menstruel de l'utilisatrice
+					${recap}
+
+					# Analyse du cycle menstruel de l'utilisatrice
+					${analysis_result}
+
+					# Historique du chat
+				`;
+
+				// Add the chat history to the user message
+				for (const message of chat_history) {
+					user += `${message}\n`;
+				}
+
+				console.log(user);
+
+				// Generate the answer
+				const answer = await AI.generate({ system, user }, async (chunk, result) => {
+					$('#analysis-questions .answer').innerText = result;
+				});
+
+				// Add the answer to the chat history
+				chat_history.push(`Assistant: ${answer}`);
+
+				// Remove the spin class
+				$('#analysis-questions .question .main.icon').classList.remove('spin');
+				$('#analysis-questions .question .main.icon').innerText = 'magic_button';
+			}
+		};
 
 		// -------- Calendar page --------
 

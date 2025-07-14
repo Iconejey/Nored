@@ -30,7 +30,7 @@ button {
 .panel-wrapper {
 	display: flex;
 	flex-direction: column;
-	gap: 1px;
+	gap: 3px;
 	border-radius: var(--radius);
 	overflow: hidden;
 	min-height: fit-content;
@@ -63,5 +63,18 @@ basic-panel {
 		padding: 0.5em;
 		padding-left: 0em;
 		padding-right: 0.8em;
+	}
+
+	&[input] .label {
+		flex: 1;
+		min-height: 1em;
+
+		&:empty::after {
+			content: attr(input);
+		}
+
+		&:not(:focus)::after {
+			opacity: 0.5;
+		}
 	}
 }
