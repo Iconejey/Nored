@@ -42,8 +42,12 @@ class MainApp extends CustomElement {
 		await STORAGE.write(`${year}-${month}.json`, data);
 	}
 
-	// Get the data recap for analysis
-	async getDataRecap() {
+	// Analyze the data using AI
+	async analyzeData() {
+		// Analyze button
+		const analysis_button = this.$('#analysis.icon');
+
+		// Entries array
 		const entries = [];
 
 		// For each calendar month data
@@ -53,84 +57,9 @@ class MainApp extends CustomElement {
 		}
 
 		// If no entries, return null
-		if (entries.length === 0) return null;
-
-		// Sort entries by date
-		entries.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-		let recap = '';
-		let last_entry = null;
-		let last_cycle_first_entry = null;
-		let duration_days_count = 0;
-		let number_of_days_between_cycles = [];
-
-		for (const entry of entries) {
-			// Increment the days count
-			duration_days_count++;
-
-			// Get the number of days since the last entry
-			const days_since_last_entry = last_entry ? (new Date(entry.date) - new Date(last_entry.date)) / (24 * 60 * 60 * 1000) : 0;
-
-			// Check if the last date is more than a week ago
-			if (days_since_last_entry > 7) {
-				// get the days since the last cycle first entry
-				const days_since_last_cycle_first_entry = (new Date(entry.date) - new Date(last_cycle_first_entry.date)) / (24 * 60 * 60 * 1000);
-
-				// Add days since last cycle first entry to the recap
-				// recap += `Règles pendant ${duration_days_count - 1} jours (${last_cycle_first_entry.date} - ${last_entry.date})\n`;
-				recap += `Règles pendant ${duration_days_count - 1} jours\n`;
-				recap += `\n${days_since_last_cycle_first_entry} jours après le début des règles précédentes :\n`;
-
-				// Set the last cycle first entry to the current entry
-				last_cycle_first_entry = entry;
-
-				// Reset the duration days count
-				duration_days_count = 1;
-
-				// Add the number of days between cycles
-				number_of_days_between_cycles.push(days_since_last_entry);
-			}
-
-			// Add the entry to the recap
-			recap += `${entry.date};${entry.flow};${entry.pain}\n`;
-
-			// Update the last date
-			last_entry = entry;
-
-			// Set the first entry of the last cycle
-			if (!last_cycle_first_entry) last_cycle_first_entry = entry;
-		}
-
-		// Add the last cycle recap
-		// recap += `Règles pendant ${duration_days_count} jours (${last_cycle_first_entry.date} - ${last_entry.date})\n`;
-		recap += `Règles pendant ${duration_days_count} jours\n`;
-		recap += `\n------\n`;
-
-		// Calculate the average number of days between cycles
-		let average_days_between_cycles = number_of_days_between_cycles.reduce((a, b) => a + b, 0) / number_of_days_between_cycles.length;
-		recap += `\nDurée moyenne des cycles : ${average_days_between_cycles.toFixed(2)} jours\n`;
-
-		// Calculate the standard deviation of the number of days between cycles
-		let variance = number_of_days_between_cycles.reduce((acc, val) => acc + Math.pow(val - average_days_between_cycles, 2), 0) / number_of_days_between_cycles.length;
-		let stddev = Math.sqrt(variance);
-		recap += `Écart type : ${stddev.toFixed(2)} jours\n`;
-
-		// Add the number of days since the last period started
-		recap += `\nJours depuis le début des dernières règles : ${Math.round((new Date() - new Date(last_cycle_first_entry.date)) / (24 * 60 * 60 * 1000))}`;
-
-		return recap;
-	}
-
-	// Analyze the data using AI
-	async analyzeData() {
-		// Analyze button
-		const analysis_button = this.$('#analysis.icon');
-
-		// Get the data recap
-		const recap = await this.getDataRecap();
-		if (!recap) {
-			$('#analysis.icon').classList.remove('color-spin');
-			$('#analysis.icon').removeAttribute('style');
+		if (entries.length === 0) {
+			analysis_button.classList.remove('color-spin');
+			analysis_button.removeAttribute('style');
 
 			$('analysis-page #analysis-clock .clock-content').innerHTML = html`
 				<div class="clock-content">
@@ -147,6 +76,90 @@ class MainApp extends CustomElement {
 			return;
 		}
 
+		// Sort entries by date
+		entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+		let recap = '';
+		let last_entry = null;
+		let last_cycle_first_entry = null;
+		let period_durations = [];
+		let duration_days_count = 0;
+		let number_of_days_between_cycles = [];
+		let days_since_last_cycle_first_entry = 0;
+
+		for (const entry of entries) {
+			// Increment the days count
+			duration_days_count++;
+
+			// Get the number of days since the last entry
+			const days_since_last_entry = last_entry ? (new Date(entry.date) - new Date(last_entry.date)) / (24 * 60 * 60 * 1000) : 0;
+
+			// Check if the last date is more than a week ago
+			if (days_since_last_entry > 7) {
+				// get the days since the last cycle first entry
+				days_since_last_cycle_first_entry = (new Date(entry.date) - new Date(last_cycle_first_entry.date)) / (24 * 60 * 60 * 1000);
+
+				// Add days since last cycle first entry to the recap
+				// recap += `Règles pendant ${duration_days_count - 1} jours (${last_cycle_first_entry.date} - ${last_entry.date})\n`;
+				recap += `Règles pendant ${duration_days_count - 1} jours\n`;
+				period_durations.push(duration_days_count - 1);
+				recap += `\n${days_since_last_cycle_first_entry} jours après le début des règles précédentes :\n`;
+
+				// Set the last cycle first entry to the current entry
+				last_cycle_first_entry = entry;
+
+				// Reset the duration days count
+				duration_days_count = 1;
+
+				// Add the number of days between cycles
+				number_of_days_between_cycles.push(days_since_last_cycle_first_entry);
+			}
+
+			// Add the entry to the recap
+			recap += `${entry.date};${entry.flow};${entry.pain}\n`;
+
+			// Update the last date
+			last_entry = entry;
+
+			// Set the first entry of the last cycle
+			if (!last_cycle_first_entry) last_cycle_first_entry = entry;
+		}
+
+		// Add the last cycle recap
+		// recap += `Règles pendant ${duration_days_count} jours (${last_cycle_first_entry.date} - ${last_entry.date})\n`;
+		recap += `Règles pendant ${duration_days_count} jours\n`;
+		period_durations.push(duration_days_count);
+		recap += `\n------\n`;
+
+		// Calculate the average and standard deviation of a given array
+		const average = arr => arr.reduce((a, b) => a + b, 0) / arr.length || 0;
+		const stddev = arr => {
+			const avg = average(arr);
+			return Math.sqrt(arr.reduce((acc, val) => acc + Math.pow(val - avg, 2), 0) / arr.length) || 0;
+		};
+
+		// Copy the number of days between cycles to a new array
+		const number_of_days_between_cycles_copy = [...number_of_days_between_cycles];
+
+		// Check the evolution of the average duration of cycles by removing the oldest cycle until there are three cycles left
+		do {
+			recap += `\nPour les ${number_of_days_between_cycles.length} derniers cycles :\n`;
+
+			// Calculate the average number of days between cycles
+			recap += `Durée moyenne des cycles : ${average(number_of_days_between_cycles).toFixed(1)} jours\n`;
+
+			// Calculate the standard deviation of the number of days between cycles
+			recap += `Écart type : ${stddev(number_of_days_between_cycles).toFixed(1)} jours\n`;
+
+			// Remove the oldest cycle
+			number_of_days_between_cycles_copy.shift();
+		} while (number_of_days_between_cycles_copy.length > 2);
+
+		// Add the number of days since the last period started
+		recap += `\nJours depuis le début des dernières règles : ${Math.round((new Date() - new Date(last_cycle_first_entry.date)) / (24 * 60 * 60 * 1000))}`;
+
+		console.log(recap);
+
 		// AI system
 		const system = `
 			Tu es un outil d'analyse de données du cycle menstruel.
@@ -154,19 +167,19 @@ class MainApp extends CustomElement {
 			Tu vas analyser les données afin de fournir les informations suivantes :
 
 			- Le nombre de jours depuis le début des dernières règles.
-			- La durée moyenne des cycles.
 			- Une estimation de la date des prochaines règles.
-			- Une estimation du risque de grossesse en cas de rapport sexuel non protégé aujourd'hui ("très faible", "faible", "moyen", "élevé", "très élevé").
-
+			
 			- La phase actuelle (règles, folliculaire, ovulation, lutéale).
 			- Si en phase de règles :
-				- Une estimation du flux (de 0 à 4).
-				- Une estimation de la douleur (de 0 à 4).
-				- Une estimation du nombre de jours restants avant la fin des règles.
-
+			- Une estimation du flux (de 0 à 4).
+			- Une estimation de la douleur (de 0 à 4).
+			- Une estimation du nombre de jours restants avant la fin des règles.
+			- Une brève description de la phase actuelle du cycle (ce que c'est, la durée moyenne, les conséquences sur le corps, les émotions, la libido, etc.).
+			
 			Si tu n'as pas assez de données pour fournir une estimation, base toi sur une moyenne de 5 jours de règles et 28 jours de cycle.
 
-			- Une brève description de la phase actuelle du cycle (ce que c'est, la durée moyenne, les conséquences sur le corps, les émotions, la libido, etc.).
+			- La probabilité que l'utilisatrice soit enceinte aujourd'hui (par exemple en cas de retard) ("Aucune", "Très faible", "Faible", "Moyenne", "Forte" "Très forte") (avec majuscule)
+			- Une estimation du risque de grossesse en cas de rapport sexuel non protégé aujourd'hui ("très faible", "faible", "moyen", "élevé", "très élevé") (en minuscules)
 
 			- Une brève analyse des données du cycle menstruel, en se basant sur les données fournies, en expliquant les tendances, les anomalies, et en donnant des conseils si nécessaire.
 
@@ -180,15 +193,19 @@ class MainApp extends CustomElement {
 
 			\`\`\`
 				<days-since-last-period>2</days-since-last-period>
-				<average-cycle-duration>28</average-cycle-duration>
 				<next-period-date>2023-11-07</next-period-date>
-				<pregnancy-risk>moyen</pregnancy-risk>
+				
 				<current-phase>règles</current-phase>
 				<period-flow>3</period-flow>
 				<period-pain>2</period-pain>
 				<days-left-in-period>3</days-left-in-period>
 				<phase-description>La phase des règles [...] mais cela varie d'une personne à l'autre.</phase-description>
+				
+				<pregnancy-probability>Aucune</pregnancy-probability>
+				<pregnancy-risk>Très faible</pregnancy-risk>
+				
 				<cycle-analysis>Le cyle du mercredi 5 décembre aurait duré 54 jours. Auriez-vous oublié de saisir le cycle précédent ? Au vu des autres cycles, vous auriez dû avoir vos rêgles du jeudi 6 au lundi 10 novembre.\\n\\nSinon, votre cycle semble régulier, mais vous semblez avoir des douleurs plus importantes ces derniers mois. Il est conseillé de consulter un professionnel de santé si cela persiste.</cycle-analysis>
+
 				<next-cycles>
 					2023-10-17;3;2 
 					2023-10-18;2;1
@@ -207,6 +224,8 @@ class MainApp extends CustomElement {
 					2023-12-09;0;0
 				</next-cycles>
 			\`\`\`
+
+			Si tu n'as pas de valeurs pour un tag, n'inclue pas le tag dans le résultat (ne jamais laisser un tag vide ou mettre "N/A" ou "null").
 		`;
 
 		// AI user
@@ -260,7 +279,12 @@ class MainApp extends CustomElement {
 		// Set clock content
 		this.$('#analysis-clock .clock-day-val').innerText = getTagValue('days-since-last-period');
 		this.$('#analysis-clock .clock-period').innerText = `Règles dans ${days_until_next_period} jours`;
-		this.$('#analysis-clock .clock-pregnancy').innerText = `Risque de grossesse ${getTagValue('pregnancy-risk')}`;
+
+		const week_days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+		const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+		const date = new Date(getTagValue('next-period-date'));
+		const formatted_date = `${week_days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+		this.$('#analysis-clock .clock-date').innerText = `Le ${formatted_date}`;
 
 		// If days left in period is not null, show it in the clock
 		const days_left_in_period = getTagValue('days-left-in-period');
@@ -271,10 +295,69 @@ class MainApp extends CustomElement {
 		for (const p of getTagValue('phase-description').replaceAll('\\n', '\n').split(/\n+/)) {
 			const p_el = document.createElement('p');
 			p_el.innerText = p.trim();
-			this.$('#analysis-phase-container').appendChild(p_el);
+			// Add paragraph before the panel wrapper
+			this.$('#analysis-phase-container').insertBefore(p_el, this.$('#analysis-phase-container .panel-wrapper'));
 		}
 
-		// Set analysis
+		// Set pregnancy probability
+		let colors = {
+			Aucune: 'green',
+			'Très faible': 'green',
+			Faible: 'yellow',
+			Moyenne: 'orange',
+			Forte: 'red',
+			'Très forte': 'red'
+		};
+
+		$('.pregnancy-probability').label = `${getTagValue('pregnancy-probability') || 'Aucune'} probabilité d'être enceinte`;
+		$('.pregnancy-probability').setAttribute('style', `color: var(--${colors[getTagValue('pregnancy-probability')] || 'green'})`);
+
+		// Set pregnancy risk
+		colors = {
+			'très faible': 'green',
+			faible: 'yellow',
+			moyen: 'orange',
+			élevé: 'red',
+			'très élevé': 'red'
+		};
+
+		$('.pregnancy-risk').label = `Risque ${getTagValue('pregnancy-risk') || 'très faible'} en cas de rapport non protégé`;
+		$('.pregnancy-risk').setAttribute('style', `color: var(--${colors[getTagValue('pregnancy-risk')]})`);
+
+		// Set the labels for the analysis panels
+		$('.analysis-period-duration').label = `Durée moyenne des règles : ${Math.round(average(period_durations))} jours`;
+		$('.analysis-cycles-average').label = `Durée moyenne des cycles : ${Math.round(average(number_of_days_between_cycles))} jours`;
+		$('.analysis-cycles-deviation').label = `Écart type : ${stddev(number_of_days_between_cycles).toFixed(1)} jours`;
+
+		// Add the current cycle to the number of days between cycles
+		number_of_days_between_cycles.push(getTagValue('days-since-last-period') || 0);
+
+		// Get the longest cycle
+		let longest_cycle = Math.max(...number_of_days_between_cycles);
+		if (number_of_days_between_cycles.length < 2) longest_cycle = 28; // Default to 28 days if not enough data
+
+		$('.analysis-cycles-count').innerText = number_of_days_between_cycles.length;
+
+		// Add cycles to graph
+		const graph = this.$('.cycle-graph');
+		for (let i = 0; i < number_of_days_between_cycles.length; i++) {
+			console.log(total_cycle_duration, longest_cycle, number_of_days_between_cycles[i]);
+
+			graph.innerHTML += html`
+				<div class="cycle">
+					<div class="cycle-total hidden" style="--duration: ${total_cycle_duration / longest_cycle}"></div>
+					<div class="cycle-duration" style="--duration: ${number_of_days_between_cycles[i] / longest_cycle}"></div>
+					<div class="cycle-period" style="--duration: ${period_durations[i] / longest_cycle}"></div>
+				</div>
+			`;
+		}
+
+		// If less than 6 cycles, add .left class to the graph
+		if (number_of_days_between_cycles.length < 8) graph.classList.add('left');
+
+		// Remove the last cycle's estimated total duration
+		graph.$('.cycle:last-child .hidden').classList.remove('hidden');
+
 		for (const p of getTagValue('cycle-analysis').replaceAll('\\n', '\n').split(/\n+/)) {
 			const p_el = document.createElement('p');
 			p_el.innerText = p.trim();

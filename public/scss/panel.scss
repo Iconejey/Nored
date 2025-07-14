@@ -33,6 +33,7 @@ button {
 	gap: 1px;
 	border-radius: var(--radius);
 	overflow: hidden;
+	min-height: fit-content;
 	border: 1px solid var(--bg-1);
 	background-color: var(--bg-1);
 
@@ -44,5 +45,23 @@ button {
 	& > * {
 		border-radius: 0;
 		border: none;
+		min-height: fit-content;
+	}
+}
+
+basic-panel {
+	display: flex;
+	align-items: center;
+
+	.icon {
+		font-size: 1.7em;
+		line-height: 1em;
+		padding: 0.5em;
+	}
+
+	.label {
+		padding: 0.5em;
+		padding-left: 0em;
+		padding-right: 0.8em;
 	}
 }
