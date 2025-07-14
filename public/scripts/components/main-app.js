@@ -158,7 +158,7 @@ class MainApp extends CustomElement {
 		// Add the number of days since the last period started
 		recap += `\nJours depuis le début des dernières règles : ${Math.round((new Date() - new Date(last_cycle_first_entry.date)) / (24 * 60 * 60 * 1000))}`;
 
-		console.log(recap);
+		// -------- AI analysis --------
 
 		// AI system
 		const system = `
@@ -178,7 +178,7 @@ class MainApp extends CustomElement {
 			
 			Si tu n'as pas assez de données pour fournir une estimation, base toi sur une moyenne de 5 jours de règles et 28 jours de cycle.
 
-			- La probabilité que l'utilisatrice soit enceinte aujourd'hui (par exemple en cas de retard) ("Aucune", "Très faible", "Faible", "Moyenne", "Forte" "Très forte") (avec majuscule)
+			- Si l'utilisatrice a du retard sur ses règles, la probabilité qu'elle soit enceinte ("Très faible", "Faible", "Moyenne", "Forte" "Très forte") (avec majuscule)
 			- Une estimation du risque de grossesse en cas de rapport sexuel non protégé aujourd'hui ("très faible", "faible", "moyen", "élevé", "très élevé") (en minuscules)
 
 			- Une brève analyse des données du cycle menstruel, en se basant sur les données fournies, en expliquant les tendances, les anomalies, et en donnant des conseils si nécessaire.
@@ -272,6 +272,8 @@ class MainApp extends CustomElement {
 		const days_until_next_period = Math.round((new Date(getTagValue('next-period-date')) - new Date()) / (24 * 60 * 60 * 1000));
 		const total_cycle_duration = days_since_last_period + days_until_next_period;
 
+		// -------- Clock --------
+
 		// Set analysis clock progress
 		const progress = Math.ceil((days_since_last_period / total_cycle_duration) * 100);
 		this.$('#analysis-clock .circular-progress').setAttribute('style', `--progress-value: ${progress}`);
@@ -290,6 +292,8 @@ class MainApp extends CustomElement {
 		const days_left_in_period = getTagValue('days-left-in-period');
 		if (days_left_in_period !== null) this.$('#analysis-clock .clock-period').innerText = `Encore ${days_left_in_period} jours de règles`;
 
+		// -------- Phase --------
+
 		// Set phase
 		this.$('.analysis-phase').innerText = getTagValue('current-phase');
 		for (const p of getTagValue('phase-description').replaceAll('\\n', '\n').split(/\n+/)) {
@@ -301,15 +305,14 @@ class MainApp extends CustomElement {
 
 		// Set pregnancy probability
 		let colors = {
-			Aucune: 'green',
 			'Très faible': 'green',
-			Faible: 'yellow',
-			Moyenne: 'orange',
-			Forte: 'red',
+			Faible: 'green',
+			Moyenne: 'yellow',
+			Forte: 'orange',
 			'Très forte': 'red'
 		};
 
-		$('.pregnancy-probability').label = `${getTagValue('pregnancy-probability') || 'Aucune'} probabilité d'être enceinte`;
+		$('.pregnancy-probability').label = `${getTagValue('pregnancy-probability') || 'Très faible'} probabilité que vous soyez enceinte`;
 		$('.pregnancy-probability').setAttribute('style', `color: var(--${colors[getTagValue('pregnancy-probability')] || 'green'})`);
 
 		// Set pregnancy risk
@@ -323,6 +326,8 @@ class MainApp extends CustomElement {
 
 		$('.pregnancy-risk').label = `Risque ${getTagValue('pregnancy-risk') || 'très faible'} en cas de rapport non protégé`;
 		$('.pregnancy-risk').setAttribute('style', `color: var(--${colors[getTagValue('pregnancy-risk')]})`);
+
+		// -------- Cycle analysis --------
 
 		// Set the labels for the analysis panels
 		$('.analysis-period-duration').label = `Durée moyenne des règles : ${Math.round(average(period_durations))} jours`;
@@ -363,6 +368,8 @@ class MainApp extends CustomElement {
 			p_el.innerText = p.trim();
 			this.$('#cycle-analysis-container').appendChild(p_el);
 		}
+
+		// -------- Calendar page --------
 
 		// Get the next period dates
 		const next_cycles = getTagValue('next-cycles')
