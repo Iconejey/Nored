@@ -44,6 +44,8 @@ class MainApp extends CustomElement {
 
 	// Analyze the data using AI
 	async analyzeData() {
+		// -------- Data recap --------
+
 		// Analyze button
 		const analysis_button = this.$('#analysis.icon');
 
@@ -395,6 +397,62 @@ class MainApp extends CustomElement {
 
 			navigator.vibrate?.(10);
 			await delay(100);
+		}
+
+		// -------- Weather --------
+
+		const weather = this.$('#analysis-weather');
+		let day = new Date();
+
+		// For the next 7 days, set the weather icon and color
+		for (let i = 0; i < 7; i++) {
+			// Get tile for the day
+			const tile = $('calendar-page').getDayTile(day);
+
+			// Default no-period day
+			let icon = 'wb_sunny';
+			let color = 'yellow';
+
+			// Icons
+			const icons = {
+				'ai-flow-0': 'partly_cloudy_day',
+				'ai-flow-1': 'cloud',
+				'ai-flow-2': 'rainy',
+				'ai-flow-3': 'rainy',
+				'ai-flow-4': 'thunderstorm'
+			};
+
+			// Colors
+			const colors = {
+				'ai-flow-0': 'orange',
+				'ai-flow-1': 'orange',
+				'ai-flow-2': 'red',
+				'ai-flow-3': 'red',
+				'ai-flow-4': 'red'
+			};
+
+			// For each value
+			for (const key in icons) {
+				// If the tile has the class, set the icon and color
+				if (tile.classList.contains(key)) {
+					icon = icons[key];
+					color = colors[key];
+					break;
+				}
+			}
+
+			const week_days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+
+			// Add the weather icon
+			weather.innerHTML += html`
+				<div class="weather-day">
+					<span class="icon" style="color: var(--${color})">${icon}</span>
+					<span class="weather-day-text">${week_days[day.getDay()]}</span>
+				</div>
+			`;
+
+			// Increment day
+			day.setDate(day.getDate() + 1);
 		}
 	}
 }

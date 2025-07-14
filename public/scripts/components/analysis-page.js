@@ -29,6 +29,8 @@ class AnalysisPage extends CustomElement {
 					</div>
 				</div>
 
+				<div id="analysis-weather"></div>
+
 				<div class="analysis-container" id="analysis-phase-container">
 					<h3>Phase <span class="analysis-phase">...</span></h3>
 
