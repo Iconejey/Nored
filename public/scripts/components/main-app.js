@@ -227,17 +227,6 @@ class MainApp extends CustomElement {
 		analysis_button.setAttribute('style', `color: var(--${['yellow', 'orange', 'orange', 'red', 'red', 'purple'][period_flow]})`);
 		analysis_button.classList.toggle('slow-spin', period_flow === 0);
 
-		// Get the next period dates
-		const next_cycles = getTagValue('next-cycles')
-			.split('\n')
-			.filter(Boolean)
-			.map(line => {
-				const [date, flow, pain] = line.trim().split(';');
-				return { date, flow: parseInt(flow), pain: parseInt(pain) };
-			});
-
-		console.log(next_cycles);
-
 		// Calculate the cycle duration
 		const days_since_last_period = getTagValue('days-since-last-period');
 		const days_until_next_period = Math.round((new Date(getTagValue('next-period-date')) - new Date()) / (24 * 60 * 60 * 1000));
@@ -267,8 +256,26 @@ class MainApp extends CustomElement {
 			this.$('#cycle-analysis-container').appendChild(p_el);
 		}
 
-		// Open analysis page for dev purposes
-		// body_class.add('analysis');
+		// Get the next period dates
+		const next_cycles = getTagValue('next-cycles')
+			.split('\n')
+			.filter(Boolean)
+			.map(line => {
+				const [date, flow, pain] = line.trim().split(';');
+				return { date, flow: parseInt(flow), pain: parseInt(pain) };
+			});
+
+		// For each next cycle entry
+		for (const entry of next_cycles) {
+			// Select the day tile for the entry date
+			const day_tile = this.$('calendar-page').getDayTile(new Date(entry.date));
+
+			// Add classes
+			day_tile.classList.add(`ai-flow-${entry.flow}`, `ai-pain-${entry.pain}`);
+
+			navigator.vibrate?.(10);
+			await delay(100);
+		}
 	}
 }
 

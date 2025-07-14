@@ -110,6 +110,26 @@ calendar-month {
 					background-color: var(--red);
 					color: var(--bg-1);
 				}
+
+				&.ai-flow-0 {
+					border: 2px dashed var(--red-trans-8);
+				}
+
+				&.ai-flow-1 {
+					border: 2px dashed var(--red-trans-6);
+				}
+
+				&.ai-flow-2 {
+					border: 2px dashed var(--red-trans-4);
+				}
+
+				&.ai-flow-3 {
+					border: 2px dashed var(--red-trans-2);
+				}
+
+				&.ai-flow-4 {
+					border: 2px dashed var(--red);
+				}
 			}
 		}
 	}
