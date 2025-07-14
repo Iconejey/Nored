@@ -128,7 +128,25 @@ class MainApp extends CustomElement {
 
 		// Get the data recap
 		const recap = await this.getDataRecap();
-		if (!recap) return;
+		if (!recap) {
+			$('#analysis.icon').classList.remove('color-spin');
+			$('#analysis.icon').removeAttribute('style');
+
+			$('analysis-page #analysis-clock .clock-content').innerHTML = html`
+				<div class="clock-content">
+					<span class="clock-day-text">Jour du cycle</span>
+					<span class="clock-day-val">0</span>
+					<span class="clock-period">Aucune donnée</span>
+					<span class="clock-pregnancy"></span>
+				</div>
+			`;
+
+			$('analysis-page #analysis-phase-container').remove();
+			$('analysis-page #cycle-analysis-container').remove();
+			$('analysis-page .analysis-info').innerText = "Veuillez saisir les jours de vos règles dans le calendrier pour que l'analyse puisse être effectuée.";
+
+			return;
+		}
 
 		// AI system
 		const system = `

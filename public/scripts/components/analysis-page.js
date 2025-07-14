@@ -38,7 +38,7 @@ class AnalysisPage extends CustomElement {
 				</div>
 
 				<div class="analysis-container">
-					<p style="color: var(--yellow);">Cette analyse a été générée par l'IA avec les données que vous avez entrées. Elle n'est pas parfaite, ne vaud pas un avis médical et peut contenir des erreurs.</p>
+					<p class="analysis-info">Cette analyse a été générée par l'IA avec les données que vous avez entrées. Elle n'est pas parfaite, ne vaud pas un avis médical et peut contenir des erreurs.</p>
 				</div>
 			`;
 
