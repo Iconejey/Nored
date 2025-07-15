@@ -16,6 +16,10 @@ class MainApp extends CustomElement {
 				<menu-page />
 				<calendar-page />
 				<analysis-page />
+				<div id="mobile-only-cover">
+					<span class="icon">menstrual_health</span>
+					<span class="text">Cette application n'est pas optimisée pour ordinateurs. Utilisez-la sur votre téléphone ou réduisez la largeur de votre navigateur pour une meilleure expérience.</span>
+				</div>
 			`;
 
 			// Show the menu page if not signed in
