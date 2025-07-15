@@ -112,6 +112,10 @@ calendar-month {
 					color: var(--bg-1);
 				}
 
+				&.ai-ovulation {
+					border: 2px dashed var(--blue);
+				}
+
 				&.ai-flow-0 {
 					border: 2px dashed var(--red-trans-8);
 				}
@@ -136,7 +140,8 @@ calendar-month {
 				&.ai-flow-1,
 				&.ai-flow-2,
 				&.ai-flow-3,
-				&.ai-flow-4 {
+				&.ai-flow-4,
+				&.ai-ovulation {
 					&.today {
 						outline-offset: -6px;
 					}

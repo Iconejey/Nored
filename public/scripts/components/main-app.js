@@ -193,6 +193,8 @@ class MainApp extends CustomElement {
 
 			- Une estimation des deux prochains cycles menstruels (et celui actuel si en phase de règles), avec le même format de jours que les données brutes (date;flux;douleur), en se basant sur les données fournies. Les valeurs 0 ne veulent pas dire qu'il n'y a pas de règles, mais que le flux ou la douleur sont très faibles. Les jours sans règles ne sont simplement pas renseignés.
 
+			- Une estimation des deux prochaines périodes d'ovulation, avec les dates seulement.
+
 			N'ajoute pas de commentaires ou d'explications supplémentaires, juste les données demandées.
 
 			Voici un exemple de resultat et format attendu, toujours en français (les valeurs sont fictives et à ne pas prendre en compte) :
@@ -229,6 +231,11 @@ class MainApp extends CustomElement {
 					2023-12-08;2;1
 					2023-12-09;0;0
 				</next-cycles>
+
+				<next-ovulation>
+					2023-10-31
+					2023-11-30
+				</next-ovulation>
 			\`\`\`
 
 			Si tu n'as pas de valeurs pour un tag, n'inclue pas le tag dans le résultat (ne jamais laisser un tag vide ou mettre "N/A" ou "null").
@@ -477,6 +484,32 @@ class MainApp extends CustomElement {
 			await delay(100);
 		}
 
+		// Get the next ovulation dates
+		const next_ovulation = getTagValue('next-ovulation')
+			.split('\n')
+			.filter(Boolean)
+			.map(date => new Date(date.trim()));
+
+		// For each next ovulation date
+		for (const date of next_ovulation) {
+			// Select the day tile for the ovulation date
+			const day_tile = this.$('calendar-page').getDayTile(date);
+
+			// Add ovulation class
+			day_tile.classList.add('ai-ovulation');
+
+			// Id today
+			if (DATE.isToday(date)) {
+				// Change analysis Icon to ovulation
+				analysis_button.innerText = 'psychiatry';
+				analysis_button.setAttribute('style', 'color: var(--blue)');
+				analysis_button.classList.remove('slow-spin');
+			}
+
+			navigator.vibrate?.(10);
+			await delay(100);
+		}
+
 		// -------- Weather --------
 
 		const weather = this.$('#analysis-weather');
@@ -497,7 +530,8 @@ class MainApp extends CustomElement {
 				'ai-flow-1': 'cloud',
 				'ai-flow-2': 'rainy',
 				'ai-flow-3': 'rainy',
-				'ai-flow-4': 'thunderstorm'
+				'ai-flow-4': 'thunderstorm',
+				'ai-ovulation': 'psychiatry'
 			};
 
 			// Colors
@@ -506,7 +540,8 @@ class MainApp extends CustomElement {
 				'ai-flow-1': 'orange',
 				'ai-flow-2': 'red',
 				'ai-flow-3': 'red',
-				'ai-flow-4': 'red'
+				'ai-flow-4': 'red',
+				'ai-ovulation': 'blue'
 			};
 
 			// For each value
