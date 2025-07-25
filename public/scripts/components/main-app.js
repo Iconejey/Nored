@@ -275,10 +275,18 @@ class MainApp extends CustomElement {
 		// Set analyse button icon
 		analysis_button.classList.remove('color-spin');
 		analysis_button.innerText = 'wb_sunny';
-		const period_flow = (getTagValue('period-flow') || -1) + 1;
-		analysis_button.innerText = ['wb_sunny', 'partly_cloudy_day', 'cloud', 'rainy', 'rainy', 'thunderstorm'][period_flow];
-		analysis_button.setAttribute('style', `color: var(--${['yellow', 'orange', 'orange', 'red', 'red', 'red'][period_flow]})`);
-		analysis_button.classList.toggle('slow-spin', period_flow === 0);
+
+		// Check for user-entered flow data for today first
+		const today = new Date();
+		const today_tile = this.$('calendar-page').getDayTile(today);
+
+		const ai_flow = parseInt(today_tile.getAttribute('ai-flow')) || 0;
+
+		// Adjust for array indexing
+		const flow_index = Math.max(0, ai_flow + 1);
+		analysis_button.innerText = ['wb_sunny', 'partly_cloudy_day', 'cloud', 'rainy', 'rainy', 'thunderstorm'][flow_index];
+		analysis_button.setAttribute('style', `color: var(--${['yellow', 'orange', 'orange', 'red', 'red', 'red'][flow_index]})`);
+		analysis_button.classList.toggle('slow-spin', flow_index === 0);
 
 		// Calculate the cycle duration
 		const days_since_last_period = getTagValue('days-since-last-period');
@@ -468,17 +476,13 @@ class MainApp extends CustomElement {
 			});
 
 		// For each next cycle entry
-		entries: for (const entry of next_cycles) {
+		for (const entry of next_cycles) {
 			// Select the day tile for the entry date
 			const day_tile = this.$('calendar-page').getDayTile(new Date(entry.date));
 
-			// If this days already has a flow class, skip it
-			for (let i = 0; i < 5; i++) {
-				if (day_tile.classList.contains(`flow-${i}`)) continue entries;
-			}
-
-			// Add classes
-			day_tile.classList.add(`ai-flow-${entry.flow}`, `ai-pain-${entry.pain}`);
+			// Store AI prediction attributes
+			day_tile.setAttribute('ai-flow', entry.flow);
+			day_tile.setAttribute('ai-pain', entry.pain);
 
 			navigator.vibrate?.(10);
 			await delay(100);
@@ -495,10 +499,10 @@ class MainApp extends CustomElement {
 			// Select the day tile for the ovulation date
 			const day_tile = this.$('calendar-page').getDayTile(date);
 
-			// Add ovulation class
+			// Store AI ovulation prediction
 			day_tile.classList.add('ai-ovulation');
 
-			// Id today
+			// If today
 			if (DATE.isToday(date)) {
 				// Change analysis Icon to ovulation
 				analysis_button.innerText = 'psychiatry';
@@ -524,34 +528,23 @@ class MainApp extends CustomElement {
 			let icon = 'wb_sunny';
 			let color = 'yellow';
 
-			// Icons
-			const icons = {
-				'ai-flow-0': 'partly_cloudy_day',
-				'ai-flow-1': 'cloud',
-				'ai-flow-2': 'rainy',
-				'ai-flow-3': 'rainy',
-				'ai-flow-4': 'thunderstorm',
-				'ai-ovulation': 'psychiatry'
-			};
+			// Check for AI flow data and ovulation
+			const ai_flow = tile.getAttribute('ai-flow');
+			const has_ai_ovulation = tile.classList.contains('ai-ovulation');
 
-			// Colors
-			const colors = {
-				'ai-flow-0': 'orange',
-				'ai-flow-1': 'orange',
-				'ai-flow-2': 'red',
-				'ai-flow-3': 'red',
-				'ai-flow-4': 'red',
-				'ai-ovulation': 'blue'
-			};
+			// Use AI flow if available
+			const flow_value = ai_flow !== null ? parseInt(ai_flow) : null;
 
-			// For each value
-			for (const key in icons) {
-				// If the tile has the class, set the icon and color
-				if (tile.classList.contains(key)) {
-					icon = icons[key];
-					color = colors[key];
-					break;
-				}
+			if (flow_value !== null && flow_value >= 0 && flow_value <= 4) {
+				// Icons based on flow level
+				const flow_icons = ['partly_cloudy_day', 'cloud', 'rainy', 'rainy', 'thunderstorm'];
+				const flow_colors = ['orange', 'orange', 'red', 'red', 'red'];
+
+				icon = flow_icons[flow_value];
+				color = flow_colors[flow_value];
+			} else if (has_ai_ovulation) {
+				icon = 'psychiatry';
+				color = 'blue';
 			}
 
 			const week_days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];

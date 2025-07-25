@@ -220,13 +220,10 @@ class CalendarPage extends CustomElement {
 			body_class.remove('form-open');
 			$('.day.selected')?.classList.remove('selected');
 
-			// Update classes
+			// Update classes and attributes
 			let day_tile = this.getDayTile(date);
-			day_tile.classList.remove('flow-0', 'flow-1', 'flow-2', 'flow-3', 'flow-4');
-			day_tile.classList.remove('pain-0', 'pain-1', 'pain-2', 'pain-3', 'pain-4');
-			day_tile.classList.remove('ai-flow-0', 'ai-flow-1', 'ai-flow-2', 'ai-flow-3', 'ai-flow-4');
-			day_tile.classList.add(`flow-${period_day.flow}`);
-			day_tile.classList.add(`pain-${period_day.pain}`);
+			day_tile.setAttribute('user-flow', period_day.flow);
+			day_tile.setAttribute('user-pain', period_day.pain);
 
 			// Get the month data
 			const month_data = await app.getMonthData(date.getFullYear(), date.getMonth());
@@ -255,10 +252,10 @@ class CalendarPage extends CustomElement {
 			body_class.remove('form-open');
 			$('.day.selected')?.classList.remove('selected');
 
-			// Remove classes from the day element
+			// Remove user attributes from the day element
 			const day_elem = this.getDayTile(date);
-			day_elem.classList.remove('flow-0', 'flow-1', 'flow-2', 'flow-3', 'flow-4');
-			day_elem.classList.remove('pain-0', 'pain-1', 'pain-2', 'pain-3', 'pain-4');
+			day_elem.removeAttribute('user-flow');
+			day_elem.removeAttribute('user-pain');
 		};
 
 		// Open the form
