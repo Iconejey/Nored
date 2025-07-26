@@ -53,11 +53,13 @@ class CalendarMonth extends CustomElement {
 				// Get the day of the month
 				const day = date.getDate();
 
-				const elem = render(html`<span class="day" value="${day}">${day}</span>`);
+				// Format date as YYYY-MM-DD using local timezone
+				const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+				const elem = render(html`<span class="day" value="${day}" date="${dateString}">${day}</span>`);
 				week_container.appendChild(elem);
 
 				// If the day is today, add a special class
-				if (day === new Date().getDate() && date.getMonth() === new Date().getMonth() && date.getFullYear() === new Date().getFullYear()) {
+				if (DATE.isToday(date)) {
 					elem.classList.add('today');
 				}
 

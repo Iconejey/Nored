@@ -26,7 +26,7 @@ class MainApp extends CustomElement {
 			body_class.toggle('menu', !userSignedIn());
 
 			// Wait for calendar page to be ready
-			this.$('calendar-page').addEventListener('ready', () => this.analyzeData());
+			this.$('calendar-page').addEventListener('ready', () => this.analyzeCycleData());
 		});
 	}
 
@@ -40,14 +40,35 @@ class MainApp extends CustomElement {
 		return data;
 	}
 
+	// Clear analysis data from local storage
+	clearAnalysisData() {
+		localStorage.removeItem('cycle-analysis');
+		localStorage.removeItem('cycle-recap');
+		localStorage.removeItem('daily-analysis');
+		localStorage.removeItem('daily-analysis-date');
+
+		// Set button to reload state
+		const analysis_button = this.$('#analysis.icon');
+		if (analysis_button) {
+			analysis_button.innerText = 'autorenew';
+			analysis_button.removeAttribute('style');
+
+			// Reload on click
+			analysis_button.onclick = () => location.reload();
+		}
+	}
+
 	// Save the data for a month
 	async saveMonthData(year, month, data) {
+		// Clear analysis data when calendar data changes
+		this.clearAnalysisData();
+
 		// Save the data to the storage
 		await STORAGE.write(`${year}-${month}.json`, data);
 	}
 
 	// Analyze the data using AI
-	async analyzeData() {
+	async analyzeCycleData() {
 		// -------- Data recap --------
 
 		// Analyze button
@@ -64,7 +85,7 @@ class MainApp extends CustomElement {
 
 		// If no entries, return null
 		if (entries.length === 0) {
-			analysis_button.classList.remove('color-spin');
+			analysis_button.classList.remove('spin');
 			analysis_button.removeAttribute('style');
 
 			$('analysis-page #analysis-clock .clock-content').innerHTML = html`
@@ -161,37 +182,23 @@ class MainApp extends CustomElement {
 			number_of_days_between_cycles_copy.shift();
 		} while (number_of_days_between_cycles_copy.length > 2);
 
-		// Add the number of days since the last period started
-		recap += `\nJours depuis le début des dernières règles : ${Math.round((new Date() - new Date(last_cycle_first_entry.date)) / (24 * 60 * 60 * 1000))}`;
-
 		// -------- AI analysis --------
+
+		// Get tile for the day
+		const today_tile = $('calendar-page').getDayTile(new Date());
+		const today_date = new Date(today_tile.getAttribute('date'));
 
 		// AI system
 		const system = `
 			Tu es un outil d'analyse de données du cycle menstruel.
 			Tu recevras des données brutes du cycle menstruel, avec pour chaque jour la date, le flux (de 0 à 4) et la douleur (de 0 à 4) (0 étant très faible et 4 étant très élevé).
 			Tu vas analyser les données afin de fournir les informations suivantes :
-
-			- Le nombre de jours depuis le début des dernières règles.
-			- Une estimation de la date des prochaines règles.
-			
-			- La phase actuelle (règles, folliculaire, ovulation, lutéale).
-			- Une brève description de la phase actuelle du cycle (ce que c'est, la durée moyenne, les conséquences sur le corps, les émotions, la libido, etc.).
-			- Si en phase de règles :
-				- Une estimation du flux (de 0 à 4).
-				- Une estimation de la douleur (de 0 à 4).
-				- Une estimation du nombre de jours restants avant la fin des règles.
 			
 			Si tu n'as pas assez de données pour fournir une estimation, base toi sur une moyenne de 5 jours de règles et 28 jours de cycle.
 
-			- Si l'utilisatrice a du retard sur ses règles, la probabilité qu'elle soit enceinte ("Très faible", "Faible", "Moyenne", "Forte" "Très forte") (avec majuscule)
-			- Une estimation du risque de grossesse en cas de rapport sexuel non protégé aujourd'hui ("très faible", "faible", "moyen", "élevé", "très élevé") (en minuscules)
+			- Une brève analyse des données du cycle menstruel, en se basant sur les données fournies, en expliquant les tendances, les anomalies, et en donnant des conseils si nécessaire. Utilise des phrases simples et sépare les paragraphes par des sauts de ligne pour une meilleure lisibilité.
 
-			- Une brève analyse des données du cycle menstruel, en se basant sur les données fournies, en expliquant les tendances, les anomalies, et en donnant des conseils si nécessaire.
-
-			Pour les deux derniers points, utilise des phrases simples et sépare les paragraphes par des sauts de ligne pour une meilleure lisibilité.
-
-			- Une estimation des deux prochains cycles menstruels (et celui actuel si en phase de règles), avec le même format de jours que les données brutes (date;flux;douleur), en se basant sur les données fournies. Les valeurs 0 ne veulent pas dire qu'il n'y a pas de règles, mais que le flux ou la douleur sont très faibles. Les jours sans règles ne sont simplement pas renseignés.
+			- Une estimation des deux prochains cycles menstruels (et celui actuel si en phase de règles), avec le même format de jours que les données brutes (date;flux;douleur), en se basant sur les données fournies. Les valeurs 0 ne veulent pas dire qu'il n'y a pas de règles, mais que le flux ou la douleur sont très faibles. Les jours sans règles ne sont simplement pas renseignés. Si les règles auraient dû commencer il y a plus de trois jours mais que l'utilisatrice n'a pas saisi de données, fait comme si les règles avaient commencé au moment où elles auraient dû commencer. Si cela fait moins de trois jours que les règles auraient dû commencer, pars du principe que les règles commencent aujourd'hui. Si actuellement en phase de règles, inclue tous les jours du cycle actuel, y compris les jours déjà passés. 
 
 			- Une estimation des deux prochaines périodes d'ovulation, avec les dates seulement.
 
@@ -200,18 +207,6 @@ class MainApp extends CustomElement {
 			Voici un exemple de resultat et format attendu, toujours en français (les valeurs sont fictives et à ne pas prendre en compte) :
 
 			\`\`\`
-				<days-since-last-period>2</days-since-last-period>
-				<next-period-date>2023-11-07</next-period-date>
-				
-				<current-phase>règles</current-phase>
-				<period-flow>3</period-flow>
-				<period-pain>2</period-pain>
-				<days-left-in-period>3</days-left-in-period>
-				<phase-description>La phase des règles [...] mais cela varie d'une personne à l'autre.</phase-description>
-				
-				<pregnancy-probability>Aucune</pregnancy-probability>
-				<pregnancy-risk>Très faible</pregnancy-risk>
-				
 				<cycle-analysis>Le cyle du mercredi 5 décembre aurait duré 54 jours. Auriez-vous oublié de saisir le cycle précédent ? Au vu des autres cycles, vous auriez dû avoir vos rêgles du jeudi 6 au lundi 10 novembre.\\n\\nSinon, votre cycle semble régulier, mais vous semblez avoir des douleurs plus importantes ces derniers mois. Il est conseillé de consulter un professionnel de santé si cela persiste.</cycle-analysis>
 
 				<next-cycles>
@@ -243,23 +238,21 @@ class MainApp extends CustomElement {
 
 		// AI user
 		let user = `
-			Aujourd'hui, nous sommes le ${new Date().toISOString().split('T')[0]}.
+			Aujourd'hui, nous sommes le ${today_date}.
 		
 			Voici le récapitulatif des données du cycle menstruel :
 			${recap}
 		`;
 
 		// Get result from local storage if available
-		let analysis_result = localStorage.getItem('ai-analysis');
-		let current_date = new Date().toISOString().split('T')[0];
-		let new_day = localStorage.getItem('ai-analysis-date') !== current_date;
+		let analysis_result = localStorage.getItem('cycle-analysis');
 
 		// Generate the AI analysis
-		if (!analysis_result || new_day) analysis_result = await AI.generate({ system, user });
+		if (!analysis_result) analysis_result = await AI.generate({ system, user });
 
-		// Save the result to local storage
-		localStorage.setItem('ai-analysis', analysis_result);
-		localStorage.setItem('ai-analysis-date', current_date);
+		// Save the result and recap to local storage
+		localStorage.setItem('cycle-analysis', analysis_result);
+		localStorage.setItem('cycle-recap', recap);
 
 		// Get a given tag's value from the AI result
 		const getTagValue = tag => {
@@ -272,13 +265,33 @@ class MainApp extends CustomElement {
 			return val;
 		};
 
+		// Get the next period dates
+		const next_cycles = getTagValue('next-cycles')
+			.split('\n')
+			.filter(Boolean)
+			.map(line => {
+				const [date, flow, pain] = line.trim().split(';');
+				return { date, flow: parseInt(flow), pain: parseInt(pain) };
+			});
+
+		// -------- Calendar page --------
+
+		// For each next cycle entry
+		for (const entry of next_cycles) {
+			// Select the day tile for the entry date
+			const day_tile = this.$('calendar-page').getDayTile(new Date(entry.date));
+
+			// Store AI prediction attributes
+			day_tile.setAttribute('ai-flow', entry.flow);
+			day_tile.setAttribute('ai-pain', entry.pain);
+
+			navigator.vibrate?.(10);
+			await delay(100);
+		}
+
 		// Set analyse button icon
 		analysis_button.classList.remove('color-spin');
 		analysis_button.innerText = 'wb_sunny';
-
-		// Check for user-entered flow data for today first
-		const today = new Date();
-		const today_tile = this.$('calendar-page').getDayTile(today);
 
 		const ai_flow = parseInt(today_tile.getAttribute('ai-flow')) || 0;
 
@@ -288,66 +301,118 @@ class MainApp extends CustomElement {
 		analysis_button.setAttribute('style', `color: var(--${['yellow', 'orange', 'orange', 'red', 'red', 'red'][flow_index]})`);
 		analysis_button.classList.toggle('slow-spin', flow_index === 0);
 
+		// Get the next ovulation dates
+		const next_ovulation = getTagValue('next-ovulation')
+			.split('\n')
+			.filter(Boolean)
+			.map(date => new Date(date.trim()));
+
+		// For each next ovulation date
+		for (const date of next_ovulation) {
+			// Select the day tile for the ovulation date
+			const day_tile = this.$('calendar-page').getDayTile(date);
+
+			// Store AI ovulation prediction
+			day_tile.classList.add('ai-ovulation');
+
+			// If today
+			if (DATE.isToday(date)) {
+				// Change analysis Icon to ovulation
+				analysis_button.innerText = 'psychiatry';
+				analysis_button.setAttribute('style', 'color: var(--blue)');
+				analysis_button.classList.remove('slow-spin');
+			}
+
+			navigator.vibrate?.(10);
+			await delay(100);
+		}
+
+		// Get the next period date from the calendar
+		let next_period_date = new Date($('span.day[ai-flow]').getAttribute('date'));
+
+		// If next period date is today or in the past, get the next cycle's first entry date
+		if (next_period_date <= today_date) {
+			for (const tile of $$('span.day[ai-flow]')) {
+				const tile_date = new Date(tile.getAttribute('date'));
+				// At least 7 days in the future
+				if ((tile_date - today_date) / (24 * 60 * 60 * 1000) >= 7) {
+					next_period_date = tile_date;
+					break;
+				}
+			}
+		}
+
 		// Calculate the cycle duration
-		const days_since_last_period = getTagValue('days-since-last-period');
-		const days_until_next_period = Math.round((new Date(getTagValue('next-period-date')) - new Date()) / (24 * 60 * 60 * 1000));
+		const days_since_last_period = Math.round((today_date - new Date(last_cycle_first_entry.date)) / (24 * 60 * 60 * 1000));
+		const days_until_next_period = next_period_date ? Math.round((new Date(next_period_date) - today_date) / (24 * 60 * 60 * 1000)) : 28 - days_since_last_period;
 		const total_cycle_duration = days_since_last_period + days_until_next_period;
+		console.log({ total_cycle_duration, days_since_last_period, days_until_next_period });
 
 		// -------- Clock --------
 
+		// Get cycle day
+		const cycle_day = days_since_last_period + 1;
+
 		// Set analysis clock progress
-		const progress = Math.ceil((days_since_last_period / total_cycle_duration) * 100);
+		const progress = Math.ceil((cycle_day / total_cycle_duration) * 100);
 		this.$('#analysis-clock .circular-progress').setAttribute('style', `--progress-value: ${progress}`);
 
 		// Set clock content
-		this.$('#analysis-clock .clock-day-val').innerText = getTagValue('days-since-last-period');
-		this.$('#analysis-clock .clock-period').innerText = `Règles dans ${days_until_next_period} jours`;
+		this.$('#analysis-clock .clock-day-val').innerText = cycle_day;
+
+		// Show days until next period
+		const clock_period = this.$('#analysis-clock .clock-period');
+		clock_period.innerText = `Règles dans ${days_until_next_period + 1} jours`;
+
+		// If less than 2 days until next period
+		if (days_until_next_period < 2) clock_period.innerText = `Règles prévues demain`;
+
+		// If less than 1 day until next period
+		if (days_until_next_period < 1) clock_period.innerText = `Règles prévues aujourd'hui`;
+
+		// If less than 0 days until next period
+		if (days_until_next_period < 0) clock_period.innerText = `Règles imminentes`;
+
+		// If more than 2 days late
+		if (days_until_next_period < -2) clock_period.innerText = `Retard de ${Math.abs(days_until_next_period)} jours`;
+
+		// Find period end for days left calculation
+		let period_end_tile;
+
+		for (const tile of $$('span.day[ai-flow]')) {
+			period_end_tile ||= tile;
+
+			const tile_date = new Date(tile.getAttribute('date'));
+			const period_end_date = new Date(period_end_tile.getAttribute('date'));
+
+			// If there is a gap of more than 7 days, break
+			if (tile_date - period_end_date > 7 * 24 * 60 * 60 * 1000) break;
+
+			// Else update period end tile
+			period_end_tile = tile;
+		}
+
+		console.log(period_end_tile);
+
+		if ((period_end_tile && today_tile.hasAttribute('ai-flow')) || today_tile.hasAttribute('user-flow')) {
+			const period_end_date = new Date(period_end_tile.getAttribute('date'));
+
+			// Check if today is within the current period
+			const days_left_in_period = Math.ceil((period_end_date - today_date) / (24 * 60 * 60 * 1000)) + 1;
+
+			// Update clock display
+			if (days_left_in_period >= 0) this.$('#analysis-clock .clock-period').innerText = `Encore ${days_left_in_period} jours de règles`;
+
+			// If last day of the period
+			if (days_left_in_period < 1) this.$('#analysis-clock .clock-period').innerText = `Dernier jour de règles`;
+		}
 
 		const week_days = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 		const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-		const date = new Date(getTagValue('next-period-date'));
+
+		const date = new Date(next_period_date);
 		const formatted_date = `${week_days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
 		this.$('#analysis-clock .clock-date').innerText = `Le ${formatted_date}`;
-
-		// If days left in period is not null, show it in the clock
-		const days_left_in_period = getTagValue('days-left-in-period');
-		if (days_left_in_period !== null) this.$('#analysis-clock .clock-period').innerText = `Encore ${days_left_in_period} jours de règles`;
-
-		// -------- Phase --------
-
-		// Set phase
-
-		this.$('.analysis-phase').innerText = getTagValue('current-phase');
-		for (const p of getTagValue('phase-description').replaceAll('\\n', '\n').split(/\n+/)) {
-			const p_el = document.createElement('p');
-			p_el.innerText = p.trim();
-			// Add paragraph before the panel wrapper
-			this.$('#analysis-phase-container').insertBefore(p_el, this.$('#analysis-phase-container .panel-wrapper'));
-		}
-
-		// Set pregnancy probability
-		let colors = {
-			'Très faible': 'green',
-			Faible: 'green',
-			Moyenne: 'yellow',
-			Forte: 'orange',
-			'Très forte': 'red'
-		};
-
-		$('.pregnancy-probability').label = `${getTagValue('pregnancy-probability') || 'Très faible'} probabilité que vous soyez enceinte`;
-		$('.pregnancy-probability').setAttribute('style', `color: var(--${colors[getTagValue('pregnancy-probability')] || 'green'})`);
-
-		// Set pregnancy risk
-		colors = {
-			'très faible': 'green',
-			faible: 'yellow',
-			moyen: 'orange',
-			élevé: 'red',
-			'très élevé': 'red'
-		};
-
-		$('.pregnancy-risk').label = `Risque ${getTagValue('pregnancy-risk') || 'très faible'} en cas de rapport non protégé`;
-		$('.pregnancy-risk').setAttribute('style', `color: var(--${colors[getTagValue('pregnancy-risk')]})`);
 
 		// -------- Cycle analysis --------
 
@@ -356,8 +421,8 @@ class MainApp extends CustomElement {
 		$('.analysis-cycles-average').label = `Durée moyenne des cycles : ${Math.round(average(number_of_days_between_cycles))} jours`;
 		$('.analysis-cycles-deviation').label = `Écart type : ${stddev(number_of_days_between_cycles).toFixed(1)} jours`;
 
-		// Add the current cycle to the number of days between cycles
-		number_of_days_between_cycles.push(getTagValue('days-since-last-period') || 0);
+		// Add the current cycle to the number of days between cycles using actual data
+		number_of_days_between_cycles.push(days_since_last_period);
 
 		// Get the longest cycle
 		let longest_cycle = Math.max(...number_of_days_between_cycles);
@@ -389,6 +454,158 @@ class MainApp extends CustomElement {
 			this.$('#cycle-analysis-container').appendChild(p_el);
 		}
 
+		// -------- Weather --------
+
+		const weather = this.$('#analysis-weather');
+		const day = new Date();
+
+		// For the next 7 days, set the weather icon and color
+		for (let i = 0; i < 7; i++) {
+			// Default no-period day
+			let icon = 'wb_sunny';
+			let color = 'yellow';
+
+			// Check for AI flow data and ovulation
+			const day_tile = $('calendar-page').getDayTile(day);
+			const ai_flow = day_tile.getAttribute('ai-flow');
+			const has_ai_ovulation = day_tile.classList.contains('ai-ovulation');
+
+			// Use AI flow if available
+			const flow_value = ai_flow !== null ? parseInt(ai_flow) : null;
+
+			if (flow_value !== null && flow_value >= 0 && flow_value <= 4) {
+				// Icons based on flow level
+				const flow_icons = ['partly_cloudy_day', 'cloud', 'rainy', 'rainy', 'thunderstorm'];
+				const flow_colors = ['orange', 'orange', 'red', 'red', 'red'];
+
+				icon = flow_icons[flow_value];
+				color = flow_colors[flow_value];
+			} else if (has_ai_ovulation) {
+				icon = 'psychiatry';
+				color = 'blue';
+			}
+
+			const week_days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+
+			// Add the weather icon
+			weather.innerHTML += html`
+				<div class="weather-day">
+					<span class="icon" style="color: var(--${color})">${icon}</span>
+					<span class="weather-day-text">${week_days[day.getDay()]}</span>
+				</div>
+			`;
+
+			// Increment day
+			day.setDate(day.getDate() + 1);
+		}
+	}
+
+	// Analyze today's cycle data
+	async analyzeTodayCycleData() {
+		// If daily analysis already shown, return
+		if (app.daily_shown) return;
+		app.daily_shown = true;
+
+		// Check if we already have analysis for today
+		const stored_analysis = localStorage.getItem('daily-analysis');
+		const stored_date = localStorage.getItem('daily-analysis-date');
+
+		// Check if stored analysis is from today
+		const is_analysis_from_today = stored_date && DATE.isToday(new Date(stored_date));
+
+		// Get the main cycle analysis data and recap (we know they exist since this function is called after main analysis)
+		const main_analysis_result = localStorage.getItem('cycle-analysis');
+		const recap = localStorage.getItem('cycle-recap');
+
+		// AI system
+		const system = `
+			Tu es un outil d'analyse de données du cycle menstruel.
+			Tu recevras un récap des données du cycle menstruel de l'utilisatrice ainsi que l'estimation des prochaines règles et ovulations.
+			Si tu n'as pas assez de données pour fournir une estimation, base toi sur une moyenne de 5 jours de règles et 28 jours de cycle.
+			Tu vas analyser les données afin de fournir les informations suivantes :
+
+			- La phase actuelle.
+			- Une brève description de la phase actuelle du cycle (ce que c'est, la durée moyenne, les conséquences sur le corps, les émotions, la libido, etc.).
+			- Si l'utilisatrice a du retard sur ses règles, la probabilité qu'elle soit enceinte ("Très faible", "Faible", "Moyenne", "Forte" "Très forte") (avec une majuscule)
+			- Une estimation du risque de grossesse en cas de rapport sexuel non protégé aujourd'hui ("très faible", "faible", "moyen", "élevé", "très élevé") (en minuscules)
+
+			Voici un exemple de resultat et format attendu, toujours en français (les valeurs sont fictives et à ne pas prendre en compte) :
+
+			\`\`\`
+				<current-phase>Phase de règles</current-phase>
+				<phase-description>La phase des règles [...] mais cela varie d'une personne à l'autre.</phase-description>
+				
+				<pregnancy-probability>Aucune</pregnancy-probability>
+				<pregnancy-risk>très faible</pregnancy-risk>
+			\`\`\`
+		`;
+
+		// AI user
+		const user = `
+			Aujourd'hui, nous sommes le ${new Date().toDateString()}.
+		
+			Voici le récapitulatif des données du cycle menstruel :
+			${recap}
+			
+			Voici l'analyse générale du cycle :
+			${main_analysis_result}
+		`;
+
+		// Get result from local storage if available, otherwise generate it
+		let daily_analysis_result = is_analysis_from_today ? stored_analysis : await AI.generate({ system, user });
+
+		// Save the result and today's date to local storage
+		localStorage.setItem('daily-analysis', daily_analysis_result);
+		localStorage.setItem('daily-analysis-date', new Date().toISOString());
+
+		// Get a given tag's value from the AI result
+		const getTagValue = tag => {
+			const regex = new RegExp(`<${tag}>(.*?)</${tag}>`, 's');
+			const match = daily_analysis_result.match(regex);
+			const val = match ? match[1].trim() : null;
+
+			// If val is a number, parse it
+			if (val !== null && !isNaN(val)) return parseFloat(val);
+			return val;
+		};
+
+		// Set phase
+		this.$('.analysis-phase').innerText = getTagValue('current-phase');
+		for (const p of getTagValue('phase-description').replaceAll('\\n', '\n').split(/\n+/)) {
+			const p_el = document.createElement('p');
+			p_el.innerText = p.trim();
+
+			// Add paragraph before the panel wrapper
+			this.$('#analysis-phase-container').insertBefore(p_el, this.$('#analysis-phase-container .panel-wrapper'));
+		}
+
+		// Set pregnancy probability
+		let colors = {
+			'Très faible': 'green',
+			Faible: 'green',
+			Moyenne: 'yellow',
+			Forte: 'orange',
+			'Très forte': 'red'
+		};
+
+		$('.pregnancy-probability').label = `${getTagValue('pregnancy-probability') || 'Très faible'} probabilité que vous soyez enceinte`;
+		$('.pregnancy-probability').setAttribute('style', `color: var(--${colors[getTagValue('pregnancy-probability')] || 'green'})`);
+
+		// Set pregnancy risk
+		colors = {
+			'très faible': 'green',
+			faible: 'yellow',
+			moyen: 'orange',
+			élevé: 'red',
+			'très élevé': 'red'
+		};
+
+		$('.pregnancy-risk').label = `Risque ${getTagValue('pregnancy-risk') || 'très faible'} en cas de rapport non protégé`;
+		$('.pregnancy-risk').setAttribute('style', `color: var(--${colors[getTagValue('pregnancy-risk')]})`);
+	}
+
+	// Show questions UI
+	showQuestions() {
 		// -------- Questions --------
 
 		// Input event
@@ -463,103 +680,6 @@ class MainApp extends CustomElement {
 				$('#analysis-questions .question .main.icon').innerText = 'magic_button';
 			}
 		};
-
-		// -------- Calendar page --------
-
-		// Get the next period dates
-		const next_cycles = getTagValue('next-cycles')
-			.split('\n')
-			.filter(Boolean)
-			.map(line => {
-				const [date, flow, pain] = line.trim().split(';');
-				return { date, flow: parseInt(flow), pain: parseInt(pain) };
-			});
-
-		// For each next cycle entry
-		for (const entry of next_cycles) {
-			// Select the day tile for the entry date
-			const day_tile = this.$('calendar-page').getDayTile(new Date(entry.date));
-
-			// Store AI prediction attributes
-			day_tile.setAttribute('ai-flow', entry.flow);
-			day_tile.setAttribute('ai-pain', entry.pain);
-
-			navigator.vibrate?.(10);
-			await delay(100);
-		}
-
-		// Get the next ovulation dates
-		const next_ovulation = getTagValue('next-ovulation')
-			.split('\n')
-			.filter(Boolean)
-			.map(date => new Date(date.trim()));
-
-		// For each next ovulation date
-		for (const date of next_ovulation) {
-			// Select the day tile for the ovulation date
-			const day_tile = this.$('calendar-page').getDayTile(date);
-
-			// Store AI ovulation prediction
-			day_tile.classList.add('ai-ovulation');
-
-			// If today
-			if (DATE.isToday(date)) {
-				// Change analysis Icon to ovulation
-				analysis_button.innerText = 'psychiatry';
-				analysis_button.setAttribute('style', 'color: var(--blue)');
-				analysis_button.classList.remove('slow-spin');
-			}
-
-			navigator.vibrate?.(10);
-			await delay(100);
-		}
-
-		// -------- Weather --------
-
-		const weather = this.$('#analysis-weather');
-		let day = new Date();
-
-		// For the next 7 days, set the weather icon and color
-		for (let i = 0; i < 7; i++) {
-			// Get tile for the day
-			const tile = $('calendar-page').getDayTile(day);
-
-			// Default no-period day
-			let icon = 'wb_sunny';
-			let color = 'yellow';
-
-			// Check for AI flow data and ovulation
-			const ai_flow = tile.getAttribute('ai-flow');
-			const has_ai_ovulation = tile.classList.contains('ai-ovulation');
-
-			// Use AI flow if available
-			const flow_value = ai_flow !== null ? parseInt(ai_flow) : null;
-
-			if (flow_value !== null && flow_value >= 0 && flow_value <= 4) {
-				// Icons based on flow level
-				const flow_icons = ['partly_cloudy_day', 'cloud', 'rainy', 'rainy', 'thunderstorm'];
-				const flow_colors = ['orange', 'orange', 'red', 'red', 'red'];
-
-				icon = flow_icons[flow_value];
-				color = flow_colors[flow_value];
-			} else if (has_ai_ovulation) {
-				icon = 'psychiatry';
-				color = 'blue';
-			}
-
-			const week_days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-
-			// Add the weather icon
-			weather.innerHTML += html`
-				<div class="weather-day">
-					<span class="icon" style="color: var(--${color})">${icon}</span>
-					<span class="weather-day-text">${week_days[day.getDay()]}</span>
-				</div>
-			`;
-
-			// Increment day
-			day.setDate(day.getDate() + 1);
-		}
 	}
 }
 

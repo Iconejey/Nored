@@ -35,6 +35,7 @@ class CalendarPage extends CustomElement {
 			this.$('header #analysis.icon').onclick = async e => {
 				e.stopPropagation();
 				if (e.target.classList.contains('color-spin')) return;
+				app.analyzeTodayCycleData();
 				body_class.add('analysis');
 				await delay(300);
 				navigator.vibrate?.(10);

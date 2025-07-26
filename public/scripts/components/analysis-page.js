@@ -32,14 +32,14 @@ class AnalysisPage extends CustomElement {
 				<div id="analysis-weather"></div>
 
 				<div class="analysis-container" id="analysis-phase-container">
-					<h3>Phase <span class="analysis-phase">...</span></h3>
+					<h3 class="analysis-phase">Chargement...</h3>
 
 					<div class="panel-wrapper">
-						<basic-panel icon="pediatrics" class="pregnancy-probability">Probabilité d'être enceinte</basic-panel>
+						<basic-panel icon="pediatrics" class="pregnancy-probability">Probabilité d'être enceinte...</basic-panel>
 					</div>
 
 					<div class="panel-wrapper">
-						<basic-panel icon="beach_access" class="pregnancy-risk">Risque en cas de rapport non protégé</basic-panel>
+						<basic-panel icon="beach_access" class="pregnancy-risk">Risque en cas de rapport non protégé...</basic-panel>
 					</div>
 				</div>
 
@@ -63,7 +63,7 @@ class AnalysisPage extends CustomElement {
 					</div>
 				</div>
 
-				<div id="analysis-questions" class="panel-wrapper">
+				<div id="analysis-questions" class="panel-wrapper" style="display: none;">
 					<div class="answer panel">Bonjour ! Je m'appelle Nono et je suis là pour répondre à vos questions sur votre cycle menstruel.</div>
 					<basic-panel icon="magic_button" class="question" input="Que voulez-vous savoir ?" />
 				</div>
@@ -86,11 +86,16 @@ class AnalysisPage extends CustomElement {
 			// Re-analyze data on re-analyze button click
 			this.$('#analysis-again').onclick = async e => {
 				e.stopPropagation();
-				localStorage.removeItem('ai-analysis');
-				localStorage.removeItem('ai-analysis-date');
+
+				// Clear all analysis data
+				app.clearAnalysisData();
+
+				// Close analysis page
 				body_class.remove('analysis');
 				await delay(300);
 				navigator.vibrate?.(10);
+
+				// Reload the page
 				location.reload();
 			};
 		});
