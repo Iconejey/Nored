@@ -5,8 +5,8 @@ Nored is a French-language web application for tracking menstrual cycles with AI
 ## Architecture Overview
 
 -   **Frontend**: Vanilla JavaScript with custom web components
--   **Backend**: Minimal Express.js static file server (`src/server.js`)
--   **Styling**: SCSS compiled to CSS
+-   **Backend**: Minimal Express.js static file server (`src/server.js`) (no need to run manually)
+-   **Styling**: SCSS compiled to CSS (done automatically, no need to run manually)
 -   **External Dependencies**: NoSuite authentication system, AI service, cloud storage
 -   **Target**: Mobile-first design (shows warning on desktop)
 
