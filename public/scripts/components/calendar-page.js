@@ -54,7 +54,7 @@ class CalendarPage extends CustomElement {
 			this.onclick = e => {
 				if (body_class.contains('form-open') && !e.target.closest('.form')) {
 					body_class.remove('form-open');
-					$('.day.selected')?.classList.remove('selected');
+					setTimeout(() => $('.day.selected')?.classList.remove('selected'), 200);
 				}
 			};
 
@@ -145,23 +145,73 @@ class CalendarPage extends CustomElement {
 
 			<div class="form-actions">
 				<h3>Flux :</h3>
-				<div class="rate" id="flow">
-					<span class="icon" value="4">water_drop</span>
-					<span class="icon" value="3">water_drop</span>
-					<span class="icon" value="2">water_drop</span>
-					<span class="icon" value="1">water_drop</span>
-					<span class="icon" value="0">water_drop</span>
+				<div class="form-item-list" id="flow">
+					<div class="form-item" value="0">
+						<span class="icon">partly_cloudy_day</span>
+						<span class="label">À peine</span>
+					</div>
+					<div class="form-item" value="1">
+						<span class="icon">cloud</span>
+						<span class="label">Léger</span>
+					</div>
+					<div class="form-item" value="2">
+						<span class="icon">rainy</span>
+						<span class="label">Modéré</span>
+					</div>
+					<div class="form-item" value="3">
+						<span class="icon">rainy</span>
+						<span class="label">Important</span>
+					</div>
+					<div class="form-item" value="4">
+						<span class="icon">thunderstorm</span>
+						<span class="label">Très important</span>
+					</div>
 				</div>
 			</div>
 
 			<div class="form-actions">
-				<h3>Douleur :</h3>
-				<div class="rate" id="pain">
-					<span class="icon" value="4">bolt</span>
-					<span class="icon" value="3">bolt</span>
-					<span class="icon" value="2">bolt</span>
-					<span class="icon" value="1">bolt</span>
-					<span class="icon" value="0">bolt</span>
+				<h3>Sympômes :</h3>
+				<div class="form-item-list" id="symptoms">
+					<div class="form-item" value="cramps">
+						<span class="icon">gynecology</span>
+						<span class="label">Crampes</span>
+					</div>
+					<div class="form-item" value="breast_pain">
+						<span class="icon">favorite</span>
+						<span class="label">Douleurs mammaires</span>
+					</div>
+					<div class="form-item" value="skin_issues">
+						<span class="icon">face</span>
+						<span class="label">Éruptions cutanées</span>
+					</div>
+					<div class="form-item" value="fatigue">
+						<span class="icon">battery_low</span>
+						<span class="label">Fatigue</span>
+					</div>
+					<div class="form-item" value="headache">
+						<span class="icon">psychology</span>
+						<span class="label">Maux de tête</span>
+					</div>
+					<div class="form-item" value="mood_swings">
+						<span class="icon">sentiment_stressed</span>
+						<span class="label">Sautes d'humeur</span>
+					</div>
+					<div class="form-item" value="bloating">
+						<span class="icon">water_drop</span>
+						<span class="label">Ballonnements</span>
+					</div>
+					<div class="form-item" value="back_pain">
+						<span class="icon">assist_walker</span>
+						<span class="label">Bas du dos</span>
+					</div>
+					<div class="form-item" value="digestive">
+						<span class="icon">gastroenterology</span>
+						<span class="label">Digestion</span>
+					</div>
+					<div class="form-item" value="sleep_issues">
+						<span class="icon">nights_stay</span>
+						<span class="label">Troubles du sommeil</span>
+					</div>
 				</div>
 			</div>
 
@@ -171,11 +221,13 @@ class CalendarPage extends CustomElement {
 
 		// If data for the selected date exists
 		if (day_data) {
-			// Select the flow rate icon
-			form.$(`.rate#flow .icon[value="${day_data.flow}"]`)?.classList.add('selected');
+			// Select the flow item
+			form.$(`#flow .form-item[value="${day_data.flow}"]`)?.classList.add('selected');
 
-			// Select the pain rate icon
-			form.$(`.rate#pain .icon[value="${day_data.pain}"]`)?.classList.add('selected');
+			// Select the symptoms items
+			day_data.symptoms?.forEach(symptom => {
+				form.$(`#symptoms .form-item[value="${symptom}"]`)?.classList.add('selected');
+			});
 
 			// Show the delete button
 			form.$('.btn#delete').classList.remove('hidden');
@@ -183,22 +235,42 @@ class CalendarPage extends CustomElement {
 			form.$('.btn#save').classList.remove('disabled');
 		}
 
-		// Rate click
-		form.$$('.rate .icon').forEach(icon => {
-			icon.onclick = e => {
+		// Update button after click
+		const updateButton = () => {
+			// If both flow selected, remove the disabled class
+			if (form.$$('#flow .form-item.selected')) form.$('.btn#save').classList.remove('disabled');
+
+			// Hide delete button
+			form.$('.btn#delete').classList.add('hidden');
+			form.$('.btn#save').classList.remove('hidden');
+		};
+
+		// Flow click
+		form.$$('#flow .form-item').forEach(item => {
+			item.onclick = e => {
 				e.stopPropagation();
+				navigator.vibrate?.(10);
 
 				// Select the icon
-				icon.parentElement.$('.icon.selected')?.classList.remove('selected');
-				icon.classList.toggle('selected');
+				$('#flow .form-item.selected')?.classList.remove('selected');
+				item.classList.toggle('selected');
 
-				// Check if both rates have a value
-				const selected = form.$$('.rate .icon.selected');
-				if (selected.length === 2) $('.btn#save').classList.remove('disabled');
+				// Update the button state
+				updateButton();
+			};
+		});
 
-				// Hide delete button
-				form.$('.btn#delete').classList.add('hidden');
-				form.$('.btn#save').classList.remove('hidden');
+		// Symptoms click
+		form.$$('#symptoms .form-item').forEach(item => {
+			item.onclick = e => {
+				e.stopPropagation();
+				navigator.vibrate?.(10);
+
+				// Toggle the selected class
+				item.classList.toggle('selected');
+
+				// Update the button state
+				updateButton();
 			};
 		});
 
@@ -206,25 +278,28 @@ class CalendarPage extends CustomElement {
 		form.$('.btn#save').onclick = async e => {
 			e.stopPropagation();
 			if (form.$('.btn#save').classList.contains('disabled')) return;
+			navigator.vibrate?.(10);
 
 			// Get the selected rates
-			const flow_rate = form.$$('.rate')[0].querySelector('.icon.selected')?.getAttribute('value') || '0';
-			const pain_rate = form.$$('.rate')[1].querySelector('.icon.selected')?.getAttribute('value') || '0';
+			const flow_rate = form.$('#flow .form-item.selected')?.getAttribute('value');
 
+			// Get the selected symptoms
+			const selected_symptoms = [...form.$$('#symptoms .form-item.selected')];
+
+			// Data structure for the period day
 			const period_day = {
 				date: date.toISOString().split('T')[0],
 				flow: parseInt(flow_rate),
-				pain: parseInt(pain_rate)
+				symptoms: selected_symptoms.map(item => item.getAttribute('value'))
 			};
 
 			// Close the form
 			body_class.remove('form-open');
-			$('.day.selected')?.classList.remove('selected');
+			setTimeout(() => $('.day.selected')?.classList.remove('selected'), 200);
 
 			// Update classes and attributes
 			let day_tile = this.getDayTile(date);
 			day_tile.setAttribute('user-flow', period_day.flow);
-			day_tile.setAttribute('user-pain', period_day.pain);
 
 			// Get the month data
 			const month_data = await app.getMonthData(date.getFullYear(), date.getMonth());
@@ -251,7 +326,7 @@ class CalendarPage extends CustomElement {
 
 			// Close the form
 			body_class.remove('form-open');
-			$('.day.selected')?.classList.remove('selected');
+			setTimeout(() => $('.day.selected')?.classList.remove('selected'), 200);
 
 			// Remove user attributes from the day element
 			const day_elem = this.getDayTile(date);

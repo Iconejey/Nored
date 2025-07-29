@@ -64,12 +64,14 @@ class CalendarMonth extends CustomElement {
 				}
 
 				// On click, dispatch a custom event with the date
-				elem.addEventListener('click', e => {
+				elem.addEventListener('click', async e => {
 					e.stopPropagation();
 					navigator.vibrate(10);
 					$('.day.selected')?.classList.remove('selected');
 					elem.classList.add('selected');
-					this.scrollIntoView({ block: 'start', behavior: 'smooth' });
+					await delay(200);
+					const scroll_elem = elem.parentElement.previousElementSibling || elem.parentElement.parentElement.previousElementSibling;
+					scroll_elem.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'smooth' });
 					const event_date = new Date(this.year, this.month, day);
 					event_date.setHours(12, 0, 0, 0);
 					this.dispatchEvent(new CustomEvent('date-selected', { detail: { date: event_date }, bubbles: true }));
