@@ -80,6 +80,12 @@ calendar-month {
 
 				&.today {
 					outline: 2px solid var(--txt-2);
+
+					&[ai-flow],
+					&.ai-ovulation,
+					&.selected {
+						outline-offset: -6px !important;
+					}
 				}
 
 				&.empty {
@@ -135,10 +141,6 @@ calendar-month {
 
 					&[ai-flow='4'] {
 						border: 2px dashed var(--red);
-					}
-
-					&[ai-flow].today {
-						outline-offset: -6px;
 					}
 				}
 			}
