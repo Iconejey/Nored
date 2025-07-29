@@ -143,7 +143,8 @@ class MainApp extends CustomElement {
 			}
 
 			// Add the entry to the recap
-			recap += `${entry.date};${entry.flow};${entry.pain}\n`;
+			const symptoms_str = entry.symptoms && entry.symptoms.length > 0 ? entry.symptoms.join(',') : '';
+			recap += `${entry.date};${symptoms_str}\n`;
 
 			// Update the last date
 			last_entry = entry;
@@ -182,6 +183,8 @@ class MainApp extends CustomElement {
 			number_of_days_between_cycles_copy.shift();
 		} while (number_of_days_between_cycles_copy.length > 2);
 
+		console.log(recap);
+
 		// -------- AI analysis --------
 
 		// Get tile for the day
@@ -191,14 +194,17 @@ class MainApp extends CustomElement {
 		// AI system
 		const system = `
 			Tu es un outil d'analyse de données du cycle menstruel.
-			Tu recevras des données brutes du cycle menstruel, avec pour chaque jour la date, le flux (de 0 à 4) et la douleur (de 0 à 4) (0 étant très faible et 4 étant très élevé).
+			Tu recevras des données brutes du cycle menstruel, avec pour chaque jour la date, le flux (de 0 à 4) et une liste de symptômes séparés par des virgules (ou vide si aucun symptôme).
+			
+			Les symptômes possibles sont : cramps (crampes), breast_pain (douleurs mammaires), skin_issues (éruptions cutanées), fatigue (fatigue), headache (maux de tête), mood_swings (sautes d'humeur), bloating (ballonnements), back_pain (mal de dos), digestive (problèmes digestifs), sleep_issues (troubles du sommeil).
+			
 			Tu vas analyser les données afin de fournir les informations suivantes :
 			
 			Si tu n'as pas assez de données pour fournir une estimation, base toi sur une moyenne de 5 jours de règles et 28 jours de cycle.
 
-			- Une brève analyse des données du cycle menstruel, en se basant sur les données fournies, en expliquant les tendances, les anomalies, et en donnant des conseils si nécessaire. Utilise des phrases simples et sépare les paragraphes par des sauts de ligne pour une meilleure lisibilité.
+			- Une brève analyse des données du cycle menstruel, en se basant sur les données fournies, en expliquant les tendances, les anomalies, et en donnant des conseils si nécessaire. Analyse également les symptômes pour donner des conseils personnalisés. Utilise des phrases simples et sépare les paragraphes par des sauts de ligne pour une meilleure lisibilité.
 
-			- Une estimation des deux prochains cycles menstruels (et celui actuel si en phase de règles), avec le même format de jours que les données brutes (date;flux;douleur), en se basant sur les données fournies. Les valeurs 0 ne veulent pas dire qu'il n'y a pas de règles, mais que le flux ou la douleur sont très faibles. Les jours sans règles ne sont simplement pas renseignés. Si les règles auraient dû commencer il y a plus de trois jours mais que l'utilisatrice n'a pas saisi de données, fait comme si les règles avaient commencé au moment où elles auraient dû commencer. Si cela fait moins de trois jours que les règles auraient dû commencer, pars du principe que les règles commencent aujourd'hui. Si actuellement en phase de règles, inclue tous les jours du cycle actuel, y compris les jours déjà passés. 
+			- Une estimation des deux prochains cycles menstruels (et celui actuel si en phase de règles), avec le même format de jours que les données brutes (date;flux), en se basant sur les données fournies. Les valeurs 0 pour le flux ne veulent pas dire qu'il n'y a pas de règles, mais que le flux est très faible. Les jours sans règles ne sont simplement pas renseignés. Si les règles auraient dû commencer il y a plus de trois jours mais que l'utilisatrice n'a pas saisi de données, fait comme si les règles avaient commencé au moment où elles auraient dû commencer. Si cela fait moins de trois jours que les règles auraient dû commencer, pars du principe que les règles commencent aujourd'hui. Si actuellement en phase de règles, inclue tous les jours du cycle actuel, y compris les jours déjà passés. 
 
 			- Une estimation des deux prochaines périodes d'ovulation, avec les dates seulement.
 
@@ -207,7 +213,7 @@ class MainApp extends CustomElement {
 			Voici un exemple de resultat et format attendu, toujours en français (les valeurs sont fictives et à ne pas prendre en compte) :
 
 			\`\`\`
-				<cycle-analysis>Le cyle du mercredi 5 décembre aurait duré 54 jours. Auriez-vous oublié de saisir le cycle précédent ? Au vu des autres cycles, vous auriez dû avoir vos rêgles du jeudi 6 au lundi 10 novembre.\\n\\nSinon, votre cycle semble régulier, mais vous semblez avoir des douleurs plus importantes ces derniers mois. Il est conseillé de consulter un professionnel de santé si cela persiste.</cycle-analysis>
+				<cycle-analysis>Le cyle du mercredi 5 décembre aurait duré 54 jours. Auriez-vous oublié de saisir le cycle précédent ? Au vu des autres cycles, vous auriez dû avoir vos rêgles du jeudi 6 au lundi 10 novembre.\\n\\nSinon, votre cycle semble régulier, mais vous semblez avoir des crampes et des maux de tête fréquents ces derniers mois. Il est conseillé de consulter un professionnel de santé si cela persiste.</cycle-analysis>
 
 				<next-cycles>
 					2023-10-17;3;2 
@@ -283,7 +289,6 @@ class MainApp extends CustomElement {
 
 			// Store AI prediction attributes
 			day_tile.setAttribute('ai-flow', entry.flow);
-			day_tile.setAttribute('ai-pain', entry.pain);
 
 			navigator.vibrate?.(10);
 			await delay(100);

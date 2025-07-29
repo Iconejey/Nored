@@ -331,7 +331,6 @@ class CalendarPage extends CustomElement {
 			// Remove user attributes from the day element
 			const day_elem = this.getDayTile(date);
 			day_elem.removeAttribute('user-flow');
-			day_elem.removeAttribute('user-pain');
 		};
 
 		// Open the form

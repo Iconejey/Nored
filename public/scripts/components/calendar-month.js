@@ -97,7 +97,6 @@ class CalendarMonth extends CustomElement {
 				const day_elem = this.$(`.day[value="${date_obj.getDate()}"]`);
 
 				day_elem.setAttribute('user-flow', day_data.flow || 0);
-				day_elem.setAttribute('user-pain', day_data.pain || 0);
 			}
 
 			// Resolve the ready promise

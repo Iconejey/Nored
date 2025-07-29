@@ -49,7 +49,7 @@ defineComponent(html`<component-name />`);
 
 -   Monthly data stored as `{year}-{month}.json` via `STORAGE.read/write`
 -   AI analysis cached in localStorage with date validation
--   Data format: `{date: {flow: 0-4, pain: 0-4}}`
+-   Data format: `{date: {flow: 0-4, symptoms: []}}`
 
 ### AI Integration
 
@@ -72,9 +72,9 @@ AI responses use XML-like tags: `<cycle-analysis>`, `<next-cycles>`, `<next-ovul
 ### Calendar Data Flow
 
 1. `calendar-month` loads monthly data from storage
-2. User interactions update day tiles with `user-flow`/`user-pain` attributes
+2. User interactions update day tiles with `user-flow` attribute
 3. `main-app.analyzeCycleData()` processes all entries for AI analysis
-4. AI predictions add `ai-flow`/`ai-pain` attributes and `ai-ovulation` classes
+4. AI predictions add `ai-flow` attribute and `ai-ovulation` classes
 
 ## Development Workflow
 
