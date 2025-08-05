@@ -170,7 +170,7 @@ class CalendarPage extends CustomElement {
 			</div>
 
 			<div class="form-actions">
-				<h3>Sympômes :</h3>
+				<h3>Symptômes :</h3>
 				<div class="form-item-list" id="symptoms">
 					<div class="form-item" value="cramps">
 						<span class="icon">gynecology</span>
@@ -335,6 +335,9 @@ class CalendarPage extends CustomElement {
 
 		// Open the form
 		body_class.add('form-open');
+
+		// Reset scroll position
+		form.scrollTop = 0;
 	}
 }
 
