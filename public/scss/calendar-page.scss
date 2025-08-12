@@ -93,7 +93,11 @@ calendar-month {
 				}
 
 				&.selected {
-					border: 2px dashed var(--txt-2);
+					border: 2px dashed var(--txt-2) !important;
+				}
+
+				&[user-flow='-1'] {
+					background-color: var(--yellow-trans-9);
 				}
 
 				&[user-flow='0'] {
@@ -123,6 +127,10 @@ calendar-month {
 				}
 
 				&:not([user-flow]) {
+					&[ai-flow='-1'] {
+						border: 2px dashed var(--yellow-trans-7);
+					}
+
 					&[ai-flow='0'] {
 						border: 2px dashed var(--red-trans-8);
 					}

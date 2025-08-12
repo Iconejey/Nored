@@ -106,6 +106,9 @@ class MainApp extends CustomElement {
 		// Sort entries by date
 		entries.sort((a, b) => new Date(a.date) - new Date(b.date));
 
+		// Filter out symptom-only entries (flow = -1) for period calculations
+		const period_entries = entries.filter(entry => entry.flow >= 0);
+
 		let recap = '';
 		let last_entry = null;
 		let last_cycle_first_entry = null;
@@ -114,7 +117,7 @@ class MainApp extends CustomElement {
 		let number_of_days_between_cycles = [];
 		let days_since_last_cycle_first_entry = 0;
 
-		for (const entry of entries) {
+		for (const entry of period_entries) {
 			// Increment the days count
 			duration_days_count++;
 
@@ -144,7 +147,7 @@ class MainApp extends CustomElement {
 
 			// Add the entry to the recap
 			const symptoms_str = entry.symptoms && entry.symptoms.length > 0 ? entry.symptoms.join(',') : '';
-			recap += `${entry.date};${symptoms_str}\n`;
+			recap += `${entry.date};${entry.flow};${symptoms_str}\n`;
 
 			// Update the last date
 			last_entry = entry;
@@ -183,6 +186,19 @@ class MainApp extends CustomElement {
 			number_of_days_between_cycles_copy.shift();
 		} while (number_of_days_between_cycles_copy.length > 2);
 
+		// Add non-period entries to the recap
+		const non_period_entries = entries.filter(entry => entry.flow === -1);
+
+		if (non_period_entries.length > 0) {
+			recap += `\n------\n\n`;
+			recap += `Symptômes hors règles :\n`;
+
+			for (const entry of non_period_entries) {
+				const symptoms_str = entry.symptoms && entry.symptoms.length > 0 ? entry.symptoms.join(',') : '';
+				recap += `${entry.date};-1;${symptoms_str}\n`;
+			}
+		}
+
 		console.log(recap);
 
 		// -------- AI analysis --------
@@ -194,7 +210,10 @@ class MainApp extends CustomElement {
 		// AI system
 		const system = `
 			Tu es un outil d'analyse de données du cycle menstruel.
-			Tu recevras des données brutes du cycle menstruel, avec pour chaque jour la date, le flux (de 0 à 4) et une liste de symptômes séparés par des virgules (ou vide si aucun symptôme).
+			Tu recevras des données brutes du cycle menstruel, avec pour chaque jour la date, le flux (de -1 à 4) et une liste de symptômes séparés par des virgules (ou vide si aucun symptôme).
+			
+			Le flux -1 signifie "pas de règles mais avec symptômes" (permet de traquer les symptômes même en dehors des règles, notamment pour le syndrome prémenstruel).
+			Le flux 0 à 4 représente l'intensité des règles : 0 = à peine, 1 = léger, 2 = modéré, 3 = important, 4 = très important.
 			
 			Les symptômes possibles sont : cramps (crampes), breast_pain (douleurs mammaires), skin_issues (éruptions cutanées), fatigue (fatigue), headache (maux de tête), mood_swings (sautes d'humeur), bloating (ballonnements), back_pain (mal de dos), digestive (problèmes digestifs), sleep_issues (troubles du sommeil).
 			
@@ -204,7 +223,9 @@ class MainApp extends CustomElement {
 
 			- Une brève analyse des données du cycle menstruel, en se basant sur les données fournies, en expliquant les tendances, les anomalies, et en donnant des conseils si nécessaire. Analyse également les symptômes pour donner des conseils personnalisés. Utilise des phrases simples et sépare les paragraphes par des sauts de ligne pour une meilleure lisibilité.
 
-			- Une estimation des deux prochains cycles menstruels (et celui actuel si en phase de règles), avec le même format de jours que les données brutes (date;flux), en se basant sur les données fournies. Les valeurs 0 pour le flux ne veulent pas dire qu'il n'y a pas de règles, mais que le flux est très faible. Les jours sans règles ne sont simplement pas renseignés. Si les règles auraient dû commencer il y a plus de trois jours mais que l'utilisatrice n'a pas saisi de données, fait comme si les règles avaient commencé au moment où elles auraient dû commencer. Si cela fait moins de trois jours que les règles auraient dû commencer, pars du principe que les règles commencent aujourd'hui. Si actuellement en phase de règles, inclue tous les jours du cycle actuel, y compris les jours déjà passés. 
+			- Une estimation des deux prochains cycles menstruels (et celui actuel si en phase de règles), avec le même format de jours que les données brutes (date;flux;symptome1,symptome2...), en se basant sur les données fournies. Si les règles auraient dû commencer il y a plus de trois jours mais que l'utilisatrice n'a pas saisi de données, fait comme si les règles avaient commencé au moment où elles auraient dû commencer. Si cela fait moins de trois jours que les règles auraient dû commencer, pars du principe que les règles commencent aujourd'hui. Si actuellement en phase de règles, inclue tous les jours du cycle actuel, y compris les jours déjà passés. 
+
+			(Les valeurs 0 pour le flux ne veulent pas dire qu'il n'y a pas de règles, mais que le flux est très faible. Les jours sans règles ne sont simplement pas renseignés, sauf s'il y a des symptômes en dehors des règles, comme pour le syndrome prémenstruel. Dans ce cas, le flux est -1.)
 
 			- Une estimation des deux prochaines périodes d'ovulation, avec les dates seulement.
 
@@ -216,21 +237,23 @@ class MainApp extends CustomElement {
 				<cycle-analysis>Le cyle du mercredi 5 décembre aurait duré 54 jours. Auriez-vous oublié de saisir le cycle précédent ? Au vu des autres cycles, vous auriez dû avoir vos rêgles du jeudi 6 au lundi 10 novembre.\\n\\nSinon, votre cycle semble régulier, mais vous semblez avoir des crampes et des maux de tête fréquents ces derniers mois. Il est conseillé de consulter un professionnel de santé si cela persiste.</cycle-analysis>
 
 				<next-cycles>
-					2023-10-17;3;2 
-					2023-10-18;2;1
-					2023-10-19;0;0
+					2023-10-17;3;
+					2023-10-18;2;
+					2023-10-19;0;
 
-					2023-11-07;2;4
-					2023-11-08;4;3
-					2023-11-09;3;2
-					2023-11-10;2;1
-					2023-11-11;0;0
+					2023-11-05;-1;breast_pain,skin_issues
+					2023-11-07;2;cramps,headache
+					2023-11-08;4;
+					2023-11-09;3;
+					2023-11-10;2;
+					2023-11-11;0;
 
-					2023-12-05;2;4
-					2023-12-06;4;3
-					2023-12-07;3;2
-					2023-12-08;2;1
-					2023-12-09;0;0
+					2023-12-02;-1;breast_pain,skin_issues
+					2023-12-05;2;cramps,headache
+					2023-12-06;4;
+					2023-12-07;3;
+					2023-12-08;2;
+					2023-12-09;0;
 				</next-cycles>
 
 				<next-ovulation>
@@ -484,6 +507,12 @@ class MainApp extends CustomElement {
 		if (has_ai_ovulation) {
 			icon = 'psychiatry';
 			color = 'blue';
+		}
+
+		// If not period day, only symptoms
+		else if (flow_value === -1) {
+			icon = 'wb_sunny';
+			color = 'yellow';
 		}
 
 		// Else if flow data is available

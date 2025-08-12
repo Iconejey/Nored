@@ -146,6 +146,10 @@ class CalendarPage extends CustomElement {
 			<div class="form-actions">
 				<h3>Flux :</h3>
 				<div class="form-item-list" id="flow">
+					<div class="form-item" value="-1">
+						<span class="icon">wb_sunny</span>
+						<span class="label">Pas de règles</span>
+					</div>
 					<div class="form-item" value="0">
 						<span class="icon">partly_cloudy_day</span>
 						<span class="label">À peine</span>
@@ -237,8 +241,8 @@ class CalendarPage extends CustomElement {
 
 		// Update button after click
 		const updateButton = () => {
-			// If both flow selected, remove the disabled class
-			if (form.$$('#flow .form-item.selected')) form.$('.btn#save').classList.remove('disabled');
+			// Allow save button only if flow is selected
+			form.$('.btn#save').classList.toggle('disabled', !form.$('#flow .form-item.selected'));
 
 			// Hide delete button
 			form.$('.btn#delete').classList.add('hidden');
