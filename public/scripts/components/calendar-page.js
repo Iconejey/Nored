@@ -42,13 +42,7 @@ class CalendarPage extends CustomElement {
 			};
 
 			// Open form on day selection
-			this.addEventListener('date-selected', e => {
-				// Only open the form if the selected date is today or in the past
-				if (e.detail?.date > new Date() && !DATE.isToday(e.detail?.date)) return;
-
-				// Open the form for the selected date
-				this.openForm(e.detail?.date);
-			});
+			this.addEventListener('date-selected', e => this.openForm(e.detail?.date));
 
 			// Close form on click outside
 			this.onclick = e => {
@@ -136,9 +130,14 @@ class CalendarPage extends CustomElement {
 	async openForm(date) {
 		const form = this.$('.form');
 
+		// Check if date is in the future
+		const is_future = date > new Date() && !DATE.isToday(date);
+
 		// Get month data for the selected date
 		const month_data = await app.getMonthData(date.getFullYear(), date.getMonth());
 		const day_data = month_data[date.toISOString().split('T')[0]];
+		const ai_flow = parseInt(this.getDayTile(date).getAttribute('ai-flow'));
+		const ai_symptoms = this.getDayTile(date).getAttribute('ai-symptoms')?.split(',') || [];
 
 		form.innerHTML = html`
 			<h3 class="date">${date.getDate()} ${CalendarMonth.MONTHS[date.getMonth()]} ${date.getFullYear()}</h3>
@@ -219,9 +218,12 @@ class CalendarPage extends CustomElement {
 				</div>
 			</div>
 
-			<span class="btn disabled" id="save"><h3>Enregistrer</h3></span>
+			<span class="btn hidden disabled" id="save"><h3>Enregistrer</h3></span>
 			<span class="btn hidden" id="delete"><h3>Supprimer</h3></span>
 		`;
+
+		// If not in the future, show the save button
+		if (!is_future) form.$('.btn#save').classList.remove('hidden');
 
 		// If data for the selected date exists
 		if (day_data) {
@@ -236,7 +238,25 @@ class CalendarPage extends CustomElement {
 			// Show the delete button
 			form.$('.btn#delete').classList.remove('hidden');
 			form.$('.btn#save').classList.add('hidden');
-			form.$('.btn#save').classList.remove('disabled');
+		}
+
+		// If data estimated by AI exists
+		else if (ai_flow) {
+			// Select the AI flow item
+			form.$(`#flow .form-item[value="${ai_flow}"]`)?.classList.add('selected');
+
+			// Select the AI symptoms items
+			for (const symptom of ai_symptoms) {
+				form.$(`#symptoms .form-item[value="${symptom}"]`)?.classList.add('selected');
+			}
+
+			// If not in the future, enable the save button
+			if (!is_future) form.$('.btn#save').classList.remove('disabled');
+		}
+
+		// If in the future, select the "Pas de règles" flow if no flow is selected
+		if (is_future && !form.$('#flow .form-item.selected')) {
+			form.$('#flow .form-item[value="-1"]').classList.add('selected');
 		}
 
 		// Update button after click
@@ -255,6 +275,9 @@ class CalendarPage extends CustomElement {
 				e.stopPropagation();
 				navigator.vibrate?.(10);
 
+				// Ignore click if in the future
+				if (is_future) return;
+
 				// Select the icon
 				$('#flow .form-item.selected')?.classList.remove('selected');
 				item.classList.toggle('selected');
@@ -269,6 +292,9 @@ class CalendarPage extends CustomElement {
 			item.onclick = e => {
 				e.stopPropagation();
 				navigator.vibrate?.(10);
+
+				// Ignore click if in the future
+				if (is_future) return;
 
 				// Toggle the selected class
 				item.classList.toggle('selected');
@@ -304,12 +330,20 @@ class CalendarPage extends CustomElement {
 			// Update classes and attributes
 			let day_tile = this.getDayTile(date);
 			day_tile.setAttribute('user-flow', period_day.flow);
+			day_tile.classList.toggle('user-symptoms', period_day.symptoms?.length);
 
 			// Get the month data
 			const month_data = await app.getMonthData(date.getFullYear(), date.getMonth());
 
 			// Set the period day in the month data
 			month_data[period_day.date] = period_day;
+
+			// Remove all days from month data that have flow -1 but no symptoms
+			for (const day in month_data) {
+				if (month_data[day].flow === -1 && !month_data[day].symptoms?.length) {
+					delete month_data[day];
+				}
+			}
 
 			// Save the month data
 			await app.saveMonthData(date.getFullYear(), date.getMonth(), month_data);
@@ -335,6 +369,7 @@ class CalendarPage extends CustomElement {
 			// Remove user attributes from the day element
 			const day_elem = this.getDayTile(date);
 			day_elem.removeAttribute('user-flow');
+			day_elem.classList.remove('user-symptoms');
 		};
 
 		// Open the form

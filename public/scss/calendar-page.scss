@@ -96,7 +96,7 @@ calendar-month {
 					border: 2px dashed var(--txt-2) !important;
 				}
 
-				&[user-flow='-1'] {
+				&.user-symptoms {
 					background-color: var(--yellow-trans-9);
 				}
 
@@ -184,7 +184,6 @@ calendar-month {
 
 	h3.date {
 		text-align: center;
-		margin-bottom: 1rem;
 	}
 
 	.form-actions {

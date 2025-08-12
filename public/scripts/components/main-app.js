@@ -299,8 +299,8 @@ class MainApp extends CustomElement {
 			.split('\n')
 			.filter(Boolean)
 			.map(line => {
-				const [date, flow, pain] = line.trim().split(';');
-				return { date, flow: parseInt(flow), pain: parseInt(pain) };
+				const [date, flow, symptoms] = line.trim().split(';');
+				return { date, flow: parseInt(flow), symptoms };
 			});
 
 		// -------- Calendar page --------
@@ -312,6 +312,7 @@ class MainApp extends CustomElement {
 
 			// Store AI prediction attributes
 			day_tile.setAttribute('ai-flow', entry.flow);
+			if (entry.symptoms?.length > 0) day_tile.setAttribute('ai-symptoms', entry.symptoms);
 
 			navigator.vibrate?.(10);
 			await delay(100);
