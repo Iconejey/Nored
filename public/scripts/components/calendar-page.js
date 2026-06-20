@@ -241,28 +241,27 @@ class CalendarPage extends CustomElement {
 		}
 
 		// If data estimated by AI exists
-		else if (ai_flow) {
-			// Select the AI flow item
-			form.$(`#flow .form-item[value="${ai_flow}"]`)?.classList.add('selected');
+		else if (ai_flow !== null && !isNaN(ai_flow)) {
+			// Add AI suggestions (not selected, just highlighted as suggestions)
+			form.$(`#flow .form-item[value="${ai_flow}"]`)?.classList.add('ai-suggested');
 
-			// Select the AI symptoms items
+			// Add AI symptom suggestions
 			for (const symptom of ai_symptoms) {
-				form.$(`#symptoms .form-item[value="${symptom}"]`)?.classList.add('selected');
+				form.$(`#symptoms .form-item[value="${symptom}"]`)?.classList.add('ai-suggested');
 			}
 
-			// If not in the future, enable the save button
-			if (!is_future) form.$('.btn#save').classList.remove('disabled');
-		}
-
-		// If in the future, select the "Pas de règles" flow if no flow is selected
-		if (is_future && !form.$('#flow .form-item.selected')) {
-			form.$('#flow .form-item[value="-1"]').classList.add('selected');
+			// Show save button but keep it disabled (no user selection yet)
+			if (!is_future) {
+				form.$('.btn#save').classList.remove('hidden');
+				form.$('.btn#save').classList.add('disabled');
+			}
 		}
 
 		// Update button after click
 		const updateButton = () => {
-			// Allow save button only if flow is selected
-			form.$('.btn#save').classList.toggle('disabled', !form.$('#flow .form-item.selected'));
+			// Allow save button only if flow is selected (not just AI suggested)
+			const has_user_selection = form.$('#flow .form-item.selected');
+			form.$('.btn#save').classList.toggle('disabled', !has_user_selection);
 
 			// Hide delete button
 			form.$('.btn#delete').classList.add('hidden');
